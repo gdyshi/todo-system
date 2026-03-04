@@ -21,6 +21,8 @@ class TaskExecutor:
             api_key=settings.glm_api_key,
             model=settings.glm_model
         )
+        # 添加 external_services 作为属性
+        self.external_services = external_services
 
     async def create_task(
         self,
