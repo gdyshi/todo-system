@@ -31,4 +31,9 @@ def get_db():
         db.close()
 
 
-__all__ = ["engine", "SessionLocal", "init_db", "get_db", "Task", "IPMapping", "TaskLocation"]
+def drop_all_tables():
+    """删除所有表（用于测试清理）"""
+    Base.metadata.drop_all(bind=engine)
+
+
+__all__ = ["engine", "SessionLocal", "init_db", "get_db", "drop_all_tables", "Task", "IPMapping", "TaskLocation"]

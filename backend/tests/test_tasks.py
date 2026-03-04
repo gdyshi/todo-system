@@ -1,26 +1,8 @@
 import pytest
 import os
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.models import Base, get_db
-
-# 测试数据库（使用内存数据库）
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
+from app.models import Base, get_db, init_db, drop_all_tables
 
 # 创建测试客户端
 client = TestClient(app)
@@ -35,11 +17,11 @@ def setup_test_environment():
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
     """设置测试数据库"""
-    # 创建表
-    Base.metadata.create_all(bind=engine)
+    # 使用应用的 init_db 来创建表
+    init_db()
     yield
     # 清理表
-    Base.metadata.drop_all(bind=engine)
+    drop_all_tables()
 
 
 def test_root():
