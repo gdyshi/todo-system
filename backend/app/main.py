@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from app.config import settings
 from app.models import init_db
 from app.api import tasks, demo
@@ -13,11 +14,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时
+    logger.info("正在初始化数据库...")
+    init_db()
+    logger.info("数据库初始化完成")
+    logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
+    
+    yield
+    
+    # 关闭时
+    logger.info("应用关闭中...")
+
 # 创建应用
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
 
 # CORS配置
@@ -28,16 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 初始化数据库
-@app.on_event("startup")
-async def startup_event():
-    """应用启动事件"""
-    logger.info("正在初始化数据库...")
-    init_db()
-    logger.info("数据库初始化完成")
-    logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
-
 
 # 注册路由
 app.include_router(tasks.router, prefix="/api", tags=["tasks"])
