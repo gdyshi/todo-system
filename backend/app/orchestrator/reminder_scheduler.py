@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 class ReminderScheduler:
     """提醒调度器 - 编排层核心"""
 
-    def __init__(self, executor: TaskExecutor):
+    def __init__(self, executor: TaskExecutor, auto_start: bool = True):
         self.executor = executor
         self.scheduler = AsyncIOScheduler()
-        self.scheduler.start()
+        if auto_start:
+            self.scheduler.start()
 
     async def schedule_reminders(self, task: Task):
         """

@@ -23,10 +23,10 @@ class TaskOrchestrator:
     - 监控执行进度，失败后调整 prompt 重试
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, auto_start_scheduler: bool = True):
         self.executor = TaskExecutor(db)
         self.context_manager = ContextManager(self.executor)
-        self.reminder_scheduler = ReminderScheduler(self.executor)
+        self.reminder_scheduler = ReminderScheduler(self.executor, auto_start=auto_start_scheduler)
 
     async def create_task(
         self,

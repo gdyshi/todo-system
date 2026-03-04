@@ -40,7 +40,10 @@ class CategoryMode(BaseModel):
 # 依赖注入
 def get_orchestrator(db: Session = Depends(get_db)) -> TaskOrchestrator:
     """获取编排器"""
-    return TaskOrchestrator(db)
+    import os
+    # 在测试环境中禁用 scheduler
+    auto_start_scheduler = os.getenv("PYTEST_CURRENT_TEST") is None
+    return TaskOrchestrator(db, auto_start_scheduler=auto_start_scheduler)
 
 
 # API端点
