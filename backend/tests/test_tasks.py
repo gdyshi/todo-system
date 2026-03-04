@@ -1,4 +1,5 @@
 import pytest
+import os
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -23,6 +24,12 @@ app.dependency_overrides[get_db] = override_get_db
 
 # 创建测试客户端
 client = TestClient(app)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """设置测试环境"""
+    os.environ["PYTEST_CURRENT_TEST"] = "1"
 
 
 @pytest.fixture(scope="function", autouse=True)
