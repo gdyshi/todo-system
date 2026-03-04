@@ -21,20 +21,16 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-# 使用 httpx.AsyncClient 处理异步端点
-@pytest.fixture
-def client():
-    """创建测试客户端"""
-    from httpx import AsyncClient
-    import asyncio
+# 创建测试客户端
+client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def setup_database():
+    """设置测试数据库"""
     # 创建表
     Base.metadata.create_all(bind=engine)
-    
-    # 使用异步客户端
-    with TestClient(app) as c:
-        yield c
-    
+    yield
     # 清理表
     Base.metadata.drop_all(bind=engine)
 
