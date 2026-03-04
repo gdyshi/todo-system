@@ -22,23 +22,20 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 # 创建测试客户端
-@pytest.fixture
-def client():
-    """创建测试客户端"""
-    from fastapi.testclient import TestClient
-    
+client = TestClient(app)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def setup_database():
+    """设置测试数据库"""
     # 创建表
     Base.metadata.create_all(bind=engine)
-    
-    # 使用 TestClient
-    with TestClient(app) as c:
-        yield c
-    
+    yield
     # 清理表
     Base.metadata.drop_all(bind=engine)
 
 
-def test_root(client):
+def test_root():
     """测试根路径"""
     response = client.get("/")
     assert response.status_code == 200
@@ -47,14 +44,14 @@ def test_root(client):
     assert "version" in data
 
 
-def test_health(client):
+def test_health():
     """测试健康检查"""
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
 
-def test_create_task(client):
+def test_create_task():
     """测试创建任务"""
     response = client.post(
         "/api/tasks",
@@ -73,7 +70,7 @@ def test_create_task(client):
     assert "id" in data
 
 
-def test_get_tasks(client):
+def test_get_tasks():
     """测试获取任务列表"""
     # 先创建一个任务
     client.post(
@@ -92,7 +89,7 @@ def test_get_tasks(client):
     assert data[0]["title"] == "测试任务"
 
 
-def test_get_task(client):
+def test_get_task():
     """测试获取单个任务"""
     # 创建任务
     create_response = client.post(
@@ -112,7 +109,7 @@ def test_get_task(client):
     assert data["title"] == "测试任务"
 
 
-def test_complete_task(client):
+def test_complete_task():
     """测试完成任务"""
     # 创建任务
     create_response = client.post(
@@ -131,7 +128,7 @@ def test_complete_task(client):
     assert data["status"] == "completed"
 
 
-def test_delete_task(client):
+def test_delete_task():
     """测试删除任务"""
     # 创建任务
     create_response = client.post(
@@ -152,7 +149,7 @@ def test_delete_task(client):
     assert get_response.status_code == 404
 
 
-def test_split_task(client):
+def test_split_task():
     """测试拆解任务"""
     # 创建任务
     create_response = client.post(
@@ -178,7 +175,7 @@ def test_split_task(client):
     assert data[0]["parent_id"] == task_id
 
 
-def test_get_stats(client):
+def test_get_stats():
     """测试获取统计信息"""
     # 创建几个任务
     client.post("/api/tasks", json={"title": "任务1"})
@@ -194,7 +191,7 @@ def test_get_stats(client):
     assert "by_category" in data
 
 
-def test_get_mode(client):
+def test_get_mode():
     """测试获取模式信息"""
     response = client.get("/api/mode")
     assert response.status_code == 200
@@ -203,7 +200,7 @@ def test_get_mode(client):
     assert "ip" in data
 
 
-def test_set_manual_mode(client):
+def test_set_manual_mode():
     """测试设置手动模式"""
     response = client.post(
         "/api/mode",
@@ -221,7 +218,7 @@ def test_set_manual_mode(client):
     assert mode_data["category"] == "work"
 
 
-def test_set_auto_mode(client):
+def test_set_auto_mode():
     """测试设置自动模式"""
     response = client.post("/api/mode", json={"mode": "auto"})
     assert response.status_code == 200
@@ -232,7 +229,7 @@ def test_set_auto_mode(client):
     assert mode_data["mode"] == "auto"
 
 
-def test_complete_task_with_subtasks(client):
+def test_complete_task_with_subtasks():
     """测试完成任务时检查子任务"""
     # 创建父任务
     create_response = client.post(
@@ -259,7 +256,7 @@ def test_complete_task_with_subtasks(client):
     assert response.status_code == 200
 
 
-def test_task_priority_filtering(client):
+def test_task_priority_filtering():
     """测试按优先级过滤任务"""
     # 创建不同优先级的任务
     client.post("/api/tasks", json={"title": "高优先级任务", "priority": 10})
