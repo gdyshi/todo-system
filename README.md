@@ -206,6 +206,55 @@ cd backend
 pytest tests/ -v
 ```
 
+## 🔍 PR 自动化审查
+
+项目已配置完整的自动化 PR 审查流程，在创建或更新 Pull Request 时自动触发。
+
+### 自动化检查项
+
+✅ **代码质量检查**
+- Black - Python 代码格式检查
+- Flake8 - Lint 检查
+- MyPy - 类型检查
+- Pylint - 代码质量评分
+
+✅ **自动化测试**
+- 单元测试（`tests/unit/`）
+- 集成测试（`tests/integration/`）
+- 测试覆盖率报告
+
+✅ **安全扫描**
+- Trivy - 漏洞扫描
+- 结果上传到 GitHub Security
+
+🤖 **AI 代码审查**
+- GitHub CodeQL - 代码分析和潜在问题检测
+- OpenAI PR Reviewer（可选，需配置 API Key）
+
+📊 **代码变更分析**
+- 识别变更的文件
+- 分析变更影响
+
+💬 **PR 自动评论**
+- 自动生成审查报告
+- 汇总所有检查结果
+
+### 使用方法
+
+1. 创建 Pull Request 到 `main` 或 `master` 分支
+2. 自动化流程自动触发
+3. 在 PR 页面查看所有检查结果
+4. 根据审查建议改进代码
+
+### 配置 Secrets（可选）
+
+如果需要 OpenAI 代码审查：
+1. 访问 https://platform.openai.com/api-keys
+2. 创建 API Key
+3. 在 GitHub 仓库设置中添加 `OPENAI_API_KEY` Secret
+
+详细配置说明请查看 [.github/PR_REVIEW_GUIDE.md](.github/PR_REVIEW_GUIDE.md)
+
 ## 📝 开发指南
 
 ### 目录结构
