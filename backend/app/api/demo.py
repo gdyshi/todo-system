@@ -1,5 +1,5 @@
 """测试双层架构的 API 端点"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.api.tasks import get_db
@@ -29,7 +29,7 @@ class CodeGenerationResponse(BaseModel):
 @router.post("/generate-code", response_model=CodeGenerationResponse)
 async def generate_code(
     request: CodeGenerationRequest,
-    db: Session = next(get_db())
+    db: Session = Depends(get_db)
 ):
     """
     测试双层架构的代码生成
