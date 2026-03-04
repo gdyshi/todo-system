@@ -3,10 +3,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.models import Base, get_db, init_db
+from app.models import Base, get_db
 
-# 测试数据库
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# 测试数据库（使用内存数据库）
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -27,8 +27,10 @@ client = TestClient(app, raise_server_exceptions=True)
 @pytest.fixture(autouse=True)
 def setup_database():
     """设置测试数据库"""
-    init_db()  # 手动初始化数据库表
+    # 创建测试数据库表
+    Base.metadata.create_all(bind=engine)
     yield
+    # 清理测试数据库
     Base.metadata.drop_all(bind=engine)
 
 
