@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -23,28 +22,23 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 # 创建测试客户端
-client = TestClient(app)
-
-
-@pytest.fixture(autouse=True)
-def setup_database():
-    """设置测试数据库"""
+@pytest.fixture
+def client():
+    """创建测试客户端"""
+    from fastapi.testclient import TestClient
+    
     # 创建表
     Base.metadata.create_all(bind=engine)
-    yield
+    
+    # 使用 TestClient
+    with TestClient(app) as c:
+        yield c
+    
     # 清理表
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """创建事件循环"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-def test_root():
+def test_root(client):
     """测试根路径"""
     response = client.get("/")
     assert response.status_code == 200
@@ -53,14 +47,14 @@ def test_root():
     assert "version" in data
 
 
-def test_health():
+def test_health(client):
     """测试健康检查"""
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
 
-def test_create_task():
+def test_create_task(client):
     """测试创建任务"""
     response = client.post(
         "/api/tasks",
@@ -79,7 +73,7 @@ def test_create_task():
     assert "id" in data
 
 
-def test_get_tasks():
+def test_get_tasks(client):
     """测试获取任务列表"""
     # 先创建一个任务
     client.post(
@@ -98,7 +92,7 @@ def test_get_tasks():
     assert data[0]["title"] == "测试任务"
 
 
-def test_get_task():
+def test_get_task(client):
     """测试获取单个任务"""
     # 创建任务
     create_response = client.post(
@@ -118,7 +112,7 @@ def test_get_task():
     assert data["title"] == "测试任务"
 
 
-def test_complete_task():
+def test_complete_task(client):
     """测试完成任务"""
     # 创建任务
     create_response = client.post(
@@ -137,7 +131,7 @@ def test_complete_task():
     assert data["status"] == "completed"
 
 
-def test_delete_task():
+def test_delete_task(client):
     """测试删除任务"""
     # 创建任务
     create_response = client.post(
@@ -158,7 +152,7 @@ def test_delete_task():
     assert get_response.status_code == 404
 
 
-def test_split_task():
+def test_split_task(client):
     """测试拆解任务"""
     # 创建任务
     create_response = client.post(
@@ -184,7 +178,7 @@ def test_split_task():
     assert data[0]["parent_id"] == task_id
 
 
-def test_get_stats():
+def test_get_stats(client):
     """测试获取统计信息"""
     # 创建几个任务
     client.post("/api/tasks", json={"title": "任务1"})
@@ -200,7 +194,7 @@ def test_get_stats():
     assert "by_category" in data
 
 
-def test_get_mode():
+def test_get_mode(client):
     """测试获取模式信息"""
     response = client.get("/api/mode")
     assert response.status_code == 200
@@ -209,7 +203,7 @@ def test_get_mode():
     assert "ip" in data
 
 
-def test_set_manual_mode():
+def test_set_manual_mode(client):
     """测试设置手动模式"""
     response = client.post(
         "/api/mode",
@@ -227,7 +221,7 @@ def test_set_manual_mode():
     assert mode_data["category"] == "work"
 
 
-def test_set_auto_mode():
+def test_set_auto_mode(client):
     """测试设置自动模式"""
     response = client.post("/api/mode", json={"mode": "auto"})
     assert response.status_code == 200
@@ -238,7 +232,7 @@ def test_set_auto_mode():
     assert mode_data["mode"] == "auto"
 
 
-def test_complete_task_with_subtasks():
+def test_complete_task_with_subtasks(client):
     """测试完成任务时检查子任务"""
     # 创建父任务
     create_response = client.post(
@@ -265,7 +259,7 @@ def test_complete_task_with_subtasks():
     assert response.status_code == 200
 
 
-def test_task_priority_filtering():
+def test_task_priority_filtering(client):
     """测试按优先级过滤任务"""
     # 创建不同优先级的任务
     client.post("/api/tasks", json={"title": "高优先级任务", "priority": 10})
