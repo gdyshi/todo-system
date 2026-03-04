@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.models import Base, get_db
+from app.models import Base, get_db, init_db
 
 # 测试数据库
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -21,13 +21,13 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-client = TestClient(app)
+client = TestClient(app, raise_server_exceptions=True)
 
 
 @pytest.fixture(autouse=True)
 def setup_database():
     """设置测试数据库"""
-    Base.metadata.create_all(bind=engine)
+    init_db()  # 手动初始化数据库表
     yield
     Base.metadata.drop_all(bind=engine)
 
