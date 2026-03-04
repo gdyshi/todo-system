@@ -251,3 +251,20 @@ def test_complete_task_with_subtasks():
     # 再次完成父任务（应该成功）
     response = client.post(f"/api/tasks/{task_id}/complete")
     assert response.status_code == 200
+
+
+def test_task_priority_filtering():
+    """测试按优先级过滤任务"""
+    # 创建不同优先级的任务
+    client.post("/api/tasks", json={"title": "高优先级任务", "priority": 10})
+    client.post("/api/tasks", json={"title": "中优先级任务", "priority": 5})
+    client.post("/api/tasks", json={"title": "低优先级任务", "priority": 1})
+
+    # 获取所有任务
+    response = client.get("/api/tasks")
+    tasks = response.json()
+
+    # 验证优先级正确设置
+    high_priority = [t for t in tasks if t["priority"] >= 8]
+    assert len(high_priority) > 0
+    assert any(t["title"] == "高优先级任务" for t in high_priority)
