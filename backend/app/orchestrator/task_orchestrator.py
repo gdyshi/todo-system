@@ -166,7 +166,7 @@ class TaskOrchestrator:
             return context.category
 
         # 根据任务内容判断
-        title = task_info.title.lower()
+        title = task_info['title'].lower()
 
         # 工作相关关键词
         work_keywords = ["项目", "报告", "会议", "文档", "代码", "bug", "功能", "客户", "需求"]
