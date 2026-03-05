@@ -7,6 +7,7 @@ from app.config import settings
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +159,7 @@ class TaskExecutor:
         task_location = TaskLocation(
             task_id=task_id,
             ip=ip,
-            location=location if location else None,
+            location=json.dumps(location) if location else None,
             category=category
         )
         self.db.add(task_location)
