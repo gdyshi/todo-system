@@ -58,9 +58,9 @@ class TaskOrchestrator:
 
         # 3. 创建主任务
         task = await self.executor.create_task(
-            title=task_info.title,
+            title=task_info['title'],
             category=category,
-            description=description or task_info.description,
+            description=description or task_info['description'],
             priority=priority,
             due_time=due_time,
             location=location
