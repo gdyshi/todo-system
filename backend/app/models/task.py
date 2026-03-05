@@ -24,7 +24,7 @@ class Task(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 关系
-    subtasks = relationship("Task", backref="parent", remote_side=[id])
+    parent = relationship("Task", remote_side=[id], backref="subtasks")
 
     def to_dict(self):
         """转换为字典"""
