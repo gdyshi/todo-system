@@ -41,9 +41,13 @@ class CategoryMode(BaseModel):
 def get_orchestrator(db: Session = Depends(get_db)) -> TaskOrchestrator:
     """获取编排器"""
     import os
+    from app.main import get_context_manager
+
     # 在测试环境中禁用 scheduler
     auto_start_scheduler = os.getenv("PYTEST_CURRENT_TEST") is None
-    return TaskOrchestrator(db, auto_start_scheduler=auto_start_scheduler)
+    context_manager = get_context_manager()
+
+    return TaskOrchestrator(db, auto_start_scheduler=auto_start_scheduler, context_manager=context_manager)
 
 
 # API端点

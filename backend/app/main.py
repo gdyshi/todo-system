@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.models import init_db
 from app.api import tasks, demo
+from app.orchestrator.context_manager import ContextManager
 import logging
 
 # 配置日志
@@ -13,6 +14,21 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# 全局上下文管理器（应用级别）
+_global_context_manager: ContextManager = None
+
+def get_context_manager() -> ContextManager:
+    """获取全局上下文管理器"""
+    global _global_context_manager
+    if _global_context_manager is None:
+        # 创建一个临时的 executor 用于初始化
+        from app.executor.task_executor import TaskExecutor
+        from app.models import get_db
+        db = next(get_db())
+        executor = TaskExecutor(db)
+        _global_context_manager = ContextManager(executor)
+    return _global_context_manager
 
 
 @asynccontextmanager
