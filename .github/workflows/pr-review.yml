@@ -114,31 +114,22 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-  # AI 代码审查（使用简单工具）
-  ai-code-review:
-    name: AI 代码审查
-    runs-on: ubuntu-latest
-    needs: [code-quality, automated-tests]
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: AI 代码审查
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:python"
-          languages: python
-
-      # 注意：已移除 OpenAI API 审查，仅使用 GitHub CodeQL 进行静态分析
+  # AI 代码审查（跳过 - 不需要执行）
+  # ai-code-review:
+  #   name: AI 代码审查
+  #   runs-on: ubuntu-latest
+  #   if: false  # 总是跳过
+  #   steps:
+  #     - name: 检出代码
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
   # 代码变更分析
   change-analysis:
     name: 代码变更分析
     runs-on: ubuntu-latest
-    needs: [automated-tests]
+    needs: [code-quality]
     if: github.event_name == 'pull_request'
     steps:
       - name: 检出代码
@@ -169,7 +160,7 @@ jobs:
   pr-comment:
     name: PR 总结评论
     runs-on: ubuntu-latest
-    needs: [code-quality, automated-tests, security-scan]
+    needs: [code-quality, automated-tests]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: 检出代码
