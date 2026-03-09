@@ -1,4 +1,3 @@
-from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from typing import Dict, Any, Optional
 import logging

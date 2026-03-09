@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
-from app.models import get_db, Task, IPMapping
+from app.models import get_db
 from app.orchestrator import TaskOrchestrator
 
 router = APIRouter()

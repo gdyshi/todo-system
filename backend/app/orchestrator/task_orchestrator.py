@@ -6,7 +6,6 @@ from app.orchestrator.reminder_scheduler import ReminderScheduler
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +247,7 @@ class TaskOrchestrator:
 
         # 如果失败，编排层调整 prompt 重试
         if not result["success"]:
-            logger.warning(f"执行层首次调用失败，尝试调整 prompt")
+            logger.warning("执行层首次调用失败，尝试调整 prompt")
             adjusted_prompt = self._adjust_prompt_on_failure(
                 prompt, result.get("error")
             )

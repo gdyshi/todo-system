@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from app.models import Task, IPMapping, TaskLocation
 from app.executor.external_services import external_services
 from app.executor.code_executor import CodeExecutor
