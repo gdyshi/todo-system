@@ -4,7 +4,6 @@ import httpx
 # from email.mime.text import MIMEText  # 邮件功能已移除
 from app.config import settings
 from typing import Dict, Any
-import json
 import logging
 
 logger = logging.getLogger(__name__)
