@@ -55,7 +55,7 @@ class ReminderScheduler:
                     trigger="date",
                     run_date=reminder_time,
                     args=[task.id, reminder_time],
-                    id=f"task_{task.id}_time_{reminder_time.timestamp()}"
+                    id=f"task_{task.id}_time_{reminder_time.timestamp()}",
                 )
                 logger.info(f"安排时间提醒: task={task.id}, time={reminder_time}")
 
@@ -90,7 +90,7 @@ class ReminderScheduler:
             trigger="interval",
             minutes=5,
             args=[task.id],
-            id=f"task_{task.id}_location_check"
+            id=f"task_{task.id}_location_check",
         )
         logger.info(f"安排位置提醒检查: task={task.id}")
 
@@ -112,9 +112,7 @@ class ReminderScheduler:
 
         # 下达发送指令
         await self.executor.send_reminder(
-            task=task,
-            type="time",
-            trigger_time=reminder_time
+            task=task, type="time", trigger_time=reminder_time
         )
 
         logger.info(f"触发时间提醒: task_id={task_id}")

@@ -1,4 +1,5 @@
 import httpx
+
 # import smtplib  # 邮件功能已移除
 # from email.mime.text import MIMEText  # 邮件功能已移除
 from app.config import settings
@@ -31,7 +32,7 @@ class ExternalServices:
                             "city": data.get("city"),
                             "lat": data.get("lat"),
                             "lon": data.get("lon"),
-                            "isp": data.get("isp")
+                            "isp": data.get("isp"),
                         }
         except Exception as e:
             logger.error(f"查询IP地理位置失败: {e}")
@@ -43,7 +44,7 @@ class ExternalServices:
             "city": "Unknown",
             "lat": 0,
             "lon": 0,
-            "isp": "Unknown"
+            "isp": "Unknown",
         }
 
     async def send_telegram_message(self, message: str) -> bool:
@@ -65,8 +66,8 @@ class ExternalServices:
                     json={
                         "chat_id": settings.telegram_chat_id,
                         "text": message,
-                        "parse_mode": "Markdown"
-                    }
+                        "parse_mode": "Markdown",
+                    },
                 )
                 if response.status_code == 200:
                     logger.info(f"Telegram消息发送成功: {message[:50]}...")

@@ -9,8 +9,7 @@ SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 # 创建引擎
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}  # SQLite需要
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}  # SQLite需要
 )
 
 # 创建会话
@@ -40,4 +39,13 @@ def drop_all_tables():
     Base.metadata.drop_all(bind=engine)
 
 
-__all__ = ["engine", "SessionLocal", "init_db", "get_db", "drop_all_tables", "Task", "IPMapping", "TaskLocation"]
+__all__ = [
+    "engine",
+    "SessionLocal",
+    "init_db",
+    "get_db",
+    "drop_all_tables",
+    "Task",
+    "IPMapping",
+    "TaskLocation",
+]

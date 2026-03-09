@@ -47,7 +47,9 @@ def get_orchestrator(db: Session = Depends(get_db)) -> TaskOrchestrator:
     auto_start_scheduler = os.getenv("PYTEST_CURRENT_TEST") is None
     context_manager = get_context_manager()
 
-    return TaskOrchestrator(db, auto_start_scheduler=auto_start_scheduler, context_manager=context_manager)
+    return TaskOrchestrator(
+        db, auto_start_scheduler=auto_start_scheduler, context_manager=context_manager
+    )
 
 
 # API端点
@@ -57,7 +59,7 @@ async def get_tasks(
     status: Optional[str] = None,
     request: Request = None,
     db: Session = Depends(get_db),
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    orchestrator: TaskOrchestrator = Depends(get_orchestrator),
 ):
     """获取任务列表"""
     executor = orchestrator.executor
@@ -66,10 +68,7 @@ async def get_tasks(
 
 
 @router.get("/tasks/{task_id}", response_model=dict)
-async def get_task(
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def get_task(task_id: int, db: Session = Depends(get_db)):
     """获取单个任务"""
     executor = TaskOrchestrator(db).executor
     task = await executor.get_task(task_id)
@@ -83,7 +82,7 @@ async def create_task(
     task_data: TaskCreate,
     request: Request,
     db: Session = Depends(get_db),
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    orchestrator: TaskOrchestrator = Depends(get_orchestrator),
 ):
     """创建任务"""
     # 获取客户端IP
@@ -100,7 +99,7 @@ async def create_task(
         subtasks=task_data.subtasks,
         priority=task_data.priority,
         due_time=task_data.due_time,
-        location=task_data.location
+        location=task_data.location,
     )
 
     return task.to_dict()
@@ -108,9 +107,7 @@ async def create_task(
 
 @router.put("/tasks/{task_id}", response_model=dict)
 async def update_task(
-    task_id: int,
-    task_data: TaskUpdate,
-    db: Session = Depends(get_db)
+    task_id: int, task_data: TaskUpdate, db: Session = Depends(get_db)
 ):
     """更新任务"""
     executor = TaskOrchestrator(db).executor
@@ -128,7 +125,7 @@ async def update_task(
 async def complete_task(
     task_id: int,
     db: Session = Depends(get_db),
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    orchestrator: TaskOrchestrator = Depends(get_orchestrator),
 ):
     """完成任务"""
     try:
@@ -144,7 +141,7 @@ async def split_task(
     split_data: TaskSplit,
     request: Request,
     db: Session = Depends(get_db),
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    orchestrator: TaskOrchestrator = Depends(get_orchestrator),
 ):
     """拆解任务为子任务"""
     # 获取客户端IP
@@ -155,19 +152,14 @@ async def split_task(
 
     # 拆解任务
     subtasks = await orchestrator.split_task(
-        task_id=task_id,
-        subtasks=split_data.subtasks,
-        context=context
+        task_id=task_id, subtasks=split_data.subtasks, context=context
     )
 
     return [subtask.to_dict() for subtask in subtasks]
 
 
 @router.delete("/tasks/{task_id}")
-async def delete_task(
-    task_id: int,
-    db: Session = Depends(get_db)
-):
+async def delete_task(task_id: int, db: Session = Depends(get_db)):
     """删除任务"""
     executor = TaskOrchestrator(db).executor
     success = await executor.delete_task(task_id)
@@ -179,8 +171,7 @@ async def delete_task(
 # 分类模式管理
 @router.post("/mode")
 async def set_mode(
-    mode_data: CategoryMode,
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    mode_data: CategoryMode, orchestrator: TaskOrchestrator = Depends(get_orchestrator)
 ):
     """设置分类模式"""
     if mode_data.mode == "manual":
@@ -197,8 +188,7 @@ async def set_mode(
 
 @router.get("/mode")
 async def get_mode(
-    request: Request,
-    orchestrator: TaskOrchestrator = Depends(get_orchestrator)
+    request: Request, orchestrator: TaskOrchestrator = Depends(get_orchestrator)
 ):
     """获取当前模式"""
     client_ip = request.client.host if request.client else "127.0.0.1"
@@ -208,15 +198,13 @@ async def get_mode(
         "mode": context.mode,
         "category": context.category,
         "ip": context.ip,
-        "location": context.location
+        "location": context.location,
     }
 
 
 # IP映射管理
 @router.get("/ip-mappings", response_model=List[dict])
-async def get_ip_mappings(
-    db: Session = Depends(get_db)
-):
+async def get_ip_mappings(db: Session = Depends(get_db)):
     """获取所有IP映射"""
     executor = TaskOrchestrator(db).executor
     mappings = await executor.get_all_ip_mappings()
@@ -224,10 +212,7 @@ async def get_ip_mappings(
 
 
 @router.delete("/ip-mappings/{mapping_id}")
-async def delete_ip_mapping(
-    mapping_id: int,
-    db: Session = Depends(get_db)
-):
+async def delete_ip_mapping(mapping_id: int, db: Session = Depends(get_db)):
     """删除IP映射"""
     executor = TaskOrchestrator(db).executor
     success = await executor.delete_ip_mapping(mapping_id)
@@ -238,9 +223,7 @@ async def delete_ip_mapping(
 
 # 统计信息
 @router.get("/stats")
-async def get_stats(
-    db: Session = Depends(get_db)
-):
+async def get_stats(db: Session = Depends(get_db)):
     """获取统计信息"""
     executor = TaskOrchestrator(db).executor
 
@@ -268,5 +251,5 @@ async def get_stats(
         "completed": completed,
         "pending": pending,
         "in_progress": in_progress,
-        "by_category": by_category
+        "by_category": by_category,
     }

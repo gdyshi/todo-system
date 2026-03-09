@@ -1,4 +1,5 @@
 """代码执行器 - 调用 Claude Code CLI（使用 GLM Coding Lite API）"""
+
 import asyncio
 import json
 import logging
@@ -24,10 +25,7 @@ class CodeExecutor:
         self.model = model
 
     async def execute_code_task(
-        self,
-        prompt: str,
-        context: Optional[str] = None,
-        **kwargs
+        self, prompt: str, context: Optional[str] = None, **kwargs
     ) -> Dict[str, Any]:
         """
         执行代码任务
@@ -52,12 +50,15 @@ class CodeExecutor:
             # 构建完整的 prompt
             full_prompt = self._build_prompt(prompt, context)
 
-            logger.info(f"调用 Claude Code CLI: model={self.model}, prompt 长度 {len(prompt)} 字符")
+            logger.info(
+                f"调用 Claude Code CLI: model={self.model}, prompt 长度 {len(prompt)} 字符"
+            )
 
             # 设置环境变量（Claude Code 使用 ANTHROPIC_API_KEY）
             env = {
                 "ANTHROPIC_API_KEY": self.api_key,
-                "PATH": "/home/gdyshi/.nvm/versions/node/v24.14.0/bin:" + "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+                "PATH": "/home/gdyshi/.nvm/versions/node/v24.14.0/bin:"
+                + "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             }
 
             # 构建 Claude Code CLI 命令
@@ -67,10 +68,12 @@ class CodeExecutor:
             # --dangerously-skip-permissions: 跳过权限检查（全权运行）
             cmd = [
                 "/home/gdyshi/.nvm/versions/node/v24.14.0/bin/claude",
-                "--model", self.model,
+                "--model",
+                self.model,
                 "--print",
-                "--output-format", "json",
-                "--dangerously-skip-permissions"
+                "--output-format",
+                "json",
+                "--dangerously-skip-permissions",
             ]
 
             # 执行命令
@@ -79,14 +82,13 @@ class CodeExecutor:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                env={**os.environ, **env}
+                env={**os.environ, **env},
             )
 
             # 使用 wait_for 处理超时
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(input=full_prompt.encode()),
-                    timeout=60.0
+                    process.communicate(input=full_prompt.encode()), timeout=60.0
                 )
             except asyncio.TimeoutError:
                 process.kill()
@@ -100,7 +102,7 @@ class CodeExecutor:
                     "success": False,
                     "error": f"Claude Code CLI 错误: {error_output}",
                     "code": None,
-                    "explanation": None
+                    "explanation": None,
                 }
 
             # 解析输出
@@ -113,7 +115,7 @@ class CodeExecutor:
                 "success": False,
                 "error": "执行超时",
                 "code": None,
-                "explanation": None
+                "explanation": None,
             }
         except Exception as e:
             logger.error(f"执行代码任务失败: {str(e)}", exc_info=True)
@@ -121,7 +123,7 @@ class CodeExecutor:
                 "success": False,
                 "error": str(e),
                 "code": None,
-                "explanation": None
+                "explanation": None,
             }
 
     def _build_prompt(self, task_prompt: str, context: Optional[str] = None) -> str:
@@ -161,7 +163,7 @@ class CodeExecutor:
                 "success": True,
                 "code": code,
                 "explanation": explanation,
-                "raw_output": output
+                "raw_output": output,
             }
 
         except json.JSONDecodeError:
@@ -173,7 +175,7 @@ class CodeExecutor:
                 "success": True,
                 "code": code,
                 "explanation": explanation,
-                "raw_output": output
+                "raw_output": output,
             }
         except Exception as e:
             logger.error(f"解析输出失败: {str(e)}")
@@ -182,7 +184,7 @@ class CodeExecutor:
                 "error": f"解析输出失败: {str(e)}",
                 "code": None,
                 "explanation": None,
-                "raw_output": output
+                "raw_output": output,
             }
 
     def _extract_code_from_text(self, text: str) -> Optional[str]:
@@ -190,14 +192,14 @@ class CodeExecutor:
         import re
 
         # 匹配 ```python ... ``` 代码块
-        pattern = r'```python\n(.*?)\n```'
+        pattern = r"```python\n(.*?)\n```"
         matches = re.findall(pattern, text, re.DOTALL)
 
         if matches:
             return matches[0].strip()
 
         # 匹配 ``` ... ``` 代码块（没有语言标识）
-        pattern = r'```\n(.*?)\n```'
+        pattern = r"```\n(.*?)\n```"
         matches = re.findall(pattern, text, re.DOTALL)
 
         if matches:
@@ -215,11 +217,7 @@ class CodeExecutor:
             return explanation.strip()
         return text
 
-    async def execute_sql_query(
-        self,
-        query: str,
-        description: str
-    ) -> Dict[str, Any]:
+    async def execute_sql_query(self, query: str, description: str) -> Dict[str, Any]:
         """
         执行 SQL 查询任务
 
@@ -265,7 +263,7 @@ class CodeExecutor:
         endpoint_description: str,
         method: str = "GET",
         input_schema: Optional[Dict] = None,
-        output_schema: Optional[Dict] = None
+        output_schema: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
         生成 API 端点代码
@@ -293,7 +291,9 @@ HTTP 方法：{method}"""
             prompt += f"\n\n输入 Schema（JSON）：\n{json.dumps(input_schema, indent=2)}"
 
         if output_schema:
-            prompt += f"\n\n输出 Schema（JSON）：\n{json.dumps(output_schema, indent=2)}"
+            prompt += (
+                f"\n\n输出 Schema（JSON）：\n{json.dumps(output_schema, indent=2)}"
+            )
 
         prompt += """
 
@@ -320,11 +320,7 @@ HTTP 方法：{method}"""
             return {
                 "success": result["success"],
                 "message": "连接成功" if result["success"] else "连接失败",
-                "error": result.get("error")
+                "error": result.get("error"),
             }
         except Exception as e:
-            return {
-                "success": False,
-                "message": "连接异常",
-                "error": str(e)
-            }
+            return {"success": False, "message": "连接异常", "error": str(e)}

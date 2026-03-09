@@ -23,10 +23,17 @@ class TaskOrchestrator:
     - 监控执行进度，失败后调整 prompt 重试
     """
 
-    def __init__(self, db: Session, auto_start_scheduler: bool = True, context_manager: ContextManager = None):
+    def __init__(
+        self,
+        db: Session,
+        auto_start_scheduler: bool = True,
+        context_manager: ContextManager = None,
+    ):
         self.executor = TaskExecutor(db)
         self.context_manager = context_manager or ContextManager(self.executor)
-        self.reminder_scheduler = ReminderScheduler(self.executor, auto_start=auto_start_scheduler)
+        self.reminder_scheduler = ReminderScheduler(
+            self.executor, auto_start=auto_start_scheduler
+        )
 
     async def create_task(
         self,
@@ -36,7 +43,7 @@ class TaskOrchestrator:
         subtasks: Optional[List[str]] = None,
         priority: int = 0,
         due_time: Optional[datetime] = None,
-        location: Optional[str] = None
+        location: Optional[str] = None,
     ) -> Task:
         """
         创建任务
@@ -58,20 +65,17 @@ class TaskOrchestrator:
 
         # 3. 创建主任务
         task = await self.executor.create_task(
-            title=task_info['title'],
+            title=task_info["title"],
             category=category,
-            description=description or task_info['description'],
+            description=description or task_info["description"],
             priority=priority,
             due_time=due_time,
-            location=location
+            location=location,
         )
 
         # 4. 学习IP/位置映射
         await self.context_manager.learn_mapping(
-            task_id=task.id,
-            ip=context.ip,
-            location=context.location,
-            category=category
+            task_id=task.id, ip=context.ip, location=context.location, category=category
         )
 
         # 5. 如果需要拆分子任务
@@ -88,14 +92,14 @@ class TaskOrchestrator:
     async def _create_subtask(self, parent_id: int, title: str, category: str) -> Task:
         """创建子任务"""
         subtask = await self.executor.create_task(
-            title=title,
-            category=category,
-            parent_id=parent_id
+            title=title, category=category, parent_id=parent_id
         )
         logger.info(f"创建子任务成功: {subtask.id} - {subtask.title}")
         return subtask
 
-    async def split_task(self, task_id: int, subtasks: List[str], context: Context) -> List[Task]:
+    async def split_task(
+        self, task_id: int, subtasks: List[str], context: Context
+    ) -> List[Task]:
         """
         拆解任务为子任务
 
@@ -112,7 +116,9 @@ class TaskOrchestrator:
         # 创建子任务
         subtask_objs = []
         for subtask_title in subtasks:
-            subtask = await self._create_subtask(task_id, subtask_title, parent_task.category)
+            subtask = await self._create_subtask(
+                task_id, subtask_title, parent_task.category
+            )
             subtask_objs.append(subtask)
 
         logger.info(f"拆解任务成功: {task_id}, 子任务数: {len(subtask_objs)}")
@@ -148,10 +154,7 @@ class TaskOrchestrator:
         - 提取关键信息
         """
         # 简化实现：返回基本信息
-        return {
-            "title": user_input,
-            "description": None
-        }
+        return {"title": user_input, "description": None}
 
     def _classify_task(self, task_info: Dict[str, Any], context: Context) -> str:
         """
@@ -166,15 +169,34 @@ class TaskOrchestrator:
             return context.category
 
         # 根据任务内容判断
-        title = task_info['title'].lower()
+        title = task_info["title"].lower()
 
         # 工作相关关键词
-        work_keywords = ["项目", "报告", "会议", "文档", "代码", "bug", "功能", "客户", "需求"]
+        work_keywords = [
+            "项目",
+            "报告",
+            "会议",
+            "文档",
+            "代码",
+            "bug",
+            "功能",
+            "客户",
+            "需求",
+        ]
         if any(keyword in title for keyword in work_keywords):
             return "work"
 
         # 教育相关关键词
-        education_keywords = ["学习", "课程", "考试", "作业", "论文", "阅读", "研究", "笔记"]
+        education_keywords = [
+            "学习",
+            "课程",
+            "考试",
+            "作业",
+            "论文",
+            "阅读",
+            "研究",
+            "笔记",
+        ]
         if any(keyword in title for keyword in education_keywords):
             return "education"
 
@@ -194,10 +216,7 @@ class TaskOrchestrator:
         self.context_manager.set_auto_mode()
 
     async def generate_and_execute_code(
-        self,
-        task: Task,
-        operation: str,
-        context: Optional[str] = None
+        self, task: Task, operation: str, context: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         生成 prompt 并调用执行层
@@ -224,28 +243,23 @@ class TaskOrchestrator:
         # 调用执行层（GLM Coding Lite）
         task_type = self._determine_task_type(operation)
         result = await self.executor.execute_code_generation(
-            task_description=prompt,
-            task_type=task_type,
-            context=context
+            task_description=prompt, task_type=task_type, context=context
         )
 
         # 如果失败，编排层调整 prompt 重试
         if not result["success"]:
             logger.warning(f"执行层首次调用失败，尝试调整 prompt")
-            adjusted_prompt = self._adjust_prompt_on_failure(prompt, result.get("error"))
+            adjusted_prompt = self._adjust_prompt_on_failure(
+                prompt, result.get("error")
+            )
             result = await self.executor.execute_code_generation(
-                task_description=adjusted_prompt,
-                task_type=task_type,
-                context=context
+                task_description=adjusted_prompt, task_type=task_type, context=context
             )
 
         return result
 
     def _generate_prompt_for_operation(
-        self,
-        task: Task,
-        operation: str,
-        context: Optional[str] = None
+        self, task: Task, operation: str, context: Optional[str] = None
     ) -> str:
         """
         为操作生成精确的 prompt
@@ -281,10 +295,12 @@ class TaskOrchestrator:
             "query": "生成一个 SQLAlchemy 查询来获取相关任务数据",
             "create_api": "创建一个 FastAPI 端点来处理这个任务",
             "analyze": "分析任务数据并生成报告",
-            "default": "根据上述信息完成相关代码任务"
+            "default": "根据上述信息完成相关代码任务",
         }
 
-        prompt_parts.append(f"\n操作：{operation_prompts.get(operation, operation_prompts['default'])}")
+        prompt_parts.append(
+            f"\n操作：{operation_prompts.get(operation, operation_prompts['default'])}"
+        )
 
         return "\n".join(prompt_parts)
 
@@ -292,9 +308,17 @@ class TaskOrchestrator:
         """确定任务类型"""
         operation_lower = operation.lower()
 
-        if "sql" in operation_lower or "query" in operation_lower or "数据库" in operation:
+        if (
+            "sql" in operation_lower
+            or "query" in operation_lower
+            or "数据库" in operation
+        ):
             return "sql"
-        elif "api" in operation_lower or "endpoint" in operation_lower or "接口" in operation:
+        elif (
+            "api" in operation_lower
+            or "endpoint" in operation_lower
+            or "接口" in operation
+        ):
             return "api"
         else:
             return "general"
