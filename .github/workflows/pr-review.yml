@@ -113,7 +113,7 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-  # AI 代码审查（使用 GitHub Actions Marketplace 工具）
+  # AI 代码审查（使用简单工具）
   ai-code-review:
     name: AI 代码审查
     runs-on: ubuntu-latest
@@ -131,14 +131,7 @@ jobs:
           category: "/language:python"
           languages: python
 
-      # 使用 OpenAI API 进行代码审查（需要配置 OPENAI_API_KEY）
-      - name: OpenAI 代码审查
-        uses: tiannaruizhu/openai-pr-reviewer@v1
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
-        with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          openai-model: gpt-4
-          review-mode: standard
+      # 注意：已移除 OpenAI API 审查，仅使用 GitHub CodeQL 进行静态分析
 
   # 代码变更分析
   change-analysis:
