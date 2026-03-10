@@ -11,11 +11,14 @@ logger = logging.getLogger(__name__)
 class ReminderScheduler:
     """提醒调度器 - 编排层核心"""
 
-    def __init__(self, executor: TaskExecutor, auto_start: bool = True):
+    def __init__(self, executor: TaskExecutor):
         self.executor = executor
         self.scheduler = AsyncIOScheduler()
-        if auto_start:
-            self.scheduler.start()
+
+    def start(self):
+        """启动调度器"""
+        self.scheduler.start()
+        logger.info("提醒调度器已启动")
 
     async def schedule_reminders(self, task: Task):
         """
@@ -38,81 +41,111 @@ class ReminderScheduler:
         """
         安排时间提醒
 
-        提醒规则：
-        - 提前1小时
-        - 提前1天
-        - 截止时间
+        计算提醒时间：
+        - 截止时间前 10 分钟
+        - 截止时间前 1 小时
+        - 截止时间前 1 天
         """
-        if not task.due_time:
-            return
+        due_time = task.due_time
 
-        reminders = self._calculate_time_reminders(task.due_time)
+        # 提前 10 分钟
+        reminder_time_10min = due_time - timedelta(minutes=10)
 
-        for reminder_time in reminders:
-            if reminder_time > datetime.utcnow():
-                self.scheduler.add_job(
-                    func=self._trigger_time_reminder,
-                    trigger="date",
-                    run_date=reminder_time,
-                    args=[task.id, reminder_time],
-                    id=f"task_{task.id}_time_{reminder_time.timestamp()}",
-                )
-                logger.info(f"安排时间提醒: task={task.id}, time={reminder_time}")
+        # 提前 1 小时
+        reminder_time_1hour = due_time - timedelta(hours=1)
 
-    def _calculate_time_reminders(self, due_time: datetime) -> List[datetime]:
-        """计算时间提醒点"""
-        reminders = []
+        # 提前 1 天
+        reminder_time_1day = due_time - timedelta(days=1)
 
-        # 截止时间
-        reminders.append(due_time)
+        now = datetime.utcnow()
 
-        # 提前1小时
-        if due_time - timedelta(hours=1) > datetime.utcnow():
-            reminders.append(due_time - timedelta(hours=1))
+        # 添加提醒任务
+        if reminder_time_1day > now:
+            self._add_reminder_job(
+                task.id, reminder_time_1day, "时间提醒", f"任务【{task.title}】将在 1 天后截止"
+            )
 
-        # 提前1天
-        if due_time - timedelta(days=1) > datetime.utcnow():
-            reminders.append(due_time - timedelta(days=1))
+        if reminder_time_1hour > now:
+            self._add_reminder_job(
+                task.id, reminder_time_1hour, "时间提醒", f"任务【{task.title}】将在 1 小时后截止"
+            )
 
-        return reminders
+        if reminder_time_10min > now:
+            self._add_reminder_job(
+                task.id, reminder_time_10min, "时间提醒", f"任务【{task.title}】将在 10 分钟后截止"
+            )
+
+        # 截止时间提醒
+        self._add_reminder_job(
+            task.id, due_time, "时间提醒", f"任务【{task.title}】已到截止时间"
+        )
+
+    def _add_reminder_job(self, task_id: int, run_time: datetime, reminder_type: str, message: str):
+        """
+        添加提醒任务
+
+        Args:
+            task_id: 任务 ID
+            run_time: 运行时间
+            reminder_type: 提醒类型
+            message: 提醒消息
+        """
+        job_id = f"task_{task_id}_time_{run_time.timestamp()}"
+
+        self.scheduler.add_job(
+            self._trigger_time_reminder,
+            trigger="date",
+            run_date=run_time,
+            args=[task_id, reminder_time, message],
+            id=job_id
+        )
+        logger.info(f"安排时间提醒: task={task_id}, time={run_time}")
 
     async def _schedule_location_reminder(self, task: Task):
         """
         安排地点提醒
 
-        提醒规则：
-        - 定期检查用户位置
-        - 进入指定区域时提醒
+        周期检查（每 5 分钟一次）：
+        - 检查用户是否进入目标区域
+        - 如果进入，触发提醒
         """
-        # 简化实现：每5分钟检查一次
+        job_id = f"task_{task.id}_location_check"
+
         self.scheduler.add_job(
-            func=self._check_location_reminder,
+            self._check_location_reminder,
             trigger="interval",
             minutes=5,
             args=[task.id],
-            id=f"task_{task.id}_location_check",
+            id=job_id
         )
-        logger.info(f"安排位置提醒检查: task={task.id}")
+        logger.info(f"安排位置提醒检查: task={task_id}")
 
-    async def _trigger_time_reminder(self, task_id: int, reminder_time: datetime):
+    async def _trigger_time_reminder(self, task_id: int, reminder_time: datetime, message: str):
         """
         触发时间提醒
 
-        编排层职责：
-        - 获取任务详情
-        - 判断是否还需要提醒（可能已经完成）
-        - 选择通知方式（Telegram/邮件）
+        Args:
+            task_id: 任务 ID
+            reminder_time: 提醒时间
+            message: 提醒消息
         """
+        # 检查任务状态
         task = await self.executor.get_task(task_id)
 
-        # 检查任务状态
-        if not task or task.status == "completed":
+        if not task:
+            logger.warning(f"任务不存在: task_id={task_id}")
+            return
+
+        # 如果任务已完成，取消后续提醒
+        if task.status == "completed":
             logger.info(f"任务已完成，取消提醒: task_id={task_id}")
             return
 
-        # 下达发送指令
+        # 发送提醒
         await self.executor.send_reminder(
-            task=task, type="time", trigger_time=reminder_time
+            task=task,
+            type="time",
+            trigger_time=reminder_time
         )
 
         logger.info(f"触发时间提醒: task_id={task_id}")
@@ -121,18 +154,27 @@ class ReminderScheduler:
         """
         检查位置提醒
 
-        编排层职责：
-        - 判断是否进入/离开目标区域
-        - 触发提醒
+        检查用户是否进入目标区域
         """
+        # 获取任务
         task = await self.executor.get_task(task_id)
 
-        # 检查任务状态
-        if not task or task.status == "completed" or not task.location:
+        if not task:
+            logger.warning(f"任务不存在: task_id={task_id}")
+            return
+
+        # 如果任务已完成，停止检查
+        if task.status == "completed":
+            logger.info(f"任务已完成，停止位置检查: task_id={task_id}")
+            # 移除定时任务
+            try:
+                self.scheduler.remove_job(f"task_{task_id}_location_check")
+            except:
+                pass
             return
 
         # 简化实现：这里需要获取用户当前位置
-        # 实际应该从API请求中获取，这里暂时跳过
+        # 实际应该从 API 请求中获取，这里暂时跳过
         logger.debug(f"检查位置提醒: task_id={task_id}")
 
     async def cancel_reminders(self, task_id: int):

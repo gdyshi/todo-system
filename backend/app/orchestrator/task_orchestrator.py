@@ -25,14 +25,13 @@ class TaskOrchestrator:
     def __init__(
         self,
         db: Session,
-        auto_start_scheduler: bool = True,
         context_manager: ContextManager = None,
+        scheduler=None,  # 接收外部 scheduler（全局单例）
     ):
         self.executor = TaskExecutor(db)
         self.context_manager = context_manager or ContextManager(self.executor)
-        self.reminder_scheduler = ReminderScheduler(
-            self.executor, auto_start=auto_start_scheduler
-        )
+        # 使用传入的 scheduler（全局单例）
+        self.reminder_scheduler = scheduler
 
     async def create_task(
         self,

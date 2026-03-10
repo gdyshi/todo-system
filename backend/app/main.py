@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # 全局上下文管理器（应用级别）
 _global_context_manager: ContextManager = None
-
+_global_scheduler = None
 
 def get_context_manager() -> ContextManager:
     """获取全局上下文管理器"""
@@ -31,6 +31,21 @@ def get_context_manager() -> ContextManager:
     return _global_context_manager
 
 
+def get_scheduler():
+    """获取全局调度器（确保单例）"""
+    global _global_scheduler
+    from app.orchestrator.reminder_scheduler import ReminderScheduler
+    from app.models import get_db
+    from app.executor.task_executor import TaskExecutor
+
+    if _global_scheduler is None:
+        db = next(get_db())
+        executor = TaskExecutor(db)
+        _global_scheduler = ReminderScheduler(executor, auto_start=False)
+        _global_scheduler.scheduler.start()
+    return _global_scheduler
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -38,12 +53,26 @@ async def lifespan(app: FastAPI):
     logger.info("正在初始化数据库...")
     init_db()
     logger.info("数据库初始化完成")
+
+    # 启动全局调度器
+    logger.info("启动调度器...")
+    scheduler = get_scheduler()
+    if scheduler:
+        await scheduler.start()
+        logger.info("调度器启动完成")
+    else:
+        logger.warning("调度器未创建，可能是在测试环境")
+
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
 
     yield
 
     # 关闭时
     logger.info("应用关闭中...")
+    if _global_scheduler:
+        _global_scheduler.shutdown()
+        logger.info("调度器已关闭")
+    logger.info("应用已关闭")
 
 
 # 创建应用
