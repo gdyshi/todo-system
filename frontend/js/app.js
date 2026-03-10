@@ -216,7 +216,8 @@ async function handleAddTask(e) {
         });
 
         if (!response.ok) {
-            throw new Error('添加任务失败');
+            const errorData = await response.json().catch(() => ({ detail: '服务器返回未知错误' }));
+            throw new Error(errorData.detail || '添加任务失败');
         }
 
         // 清空表单
@@ -266,7 +267,8 @@ async function deleteTask(taskId) {
         });
 
         if (!response.ok) {
-            throw new Error('删除任务失败');
+            const errorData = await response.json().catch(() => ({ detail: '服务器返回未知错误' }));
+            throw new Error(errorData.detail || '删除任务失败');
         }
 
         await loadTasks();
@@ -299,7 +301,8 @@ async function promptSplitTask(taskId) {
         });
 
         if (!response.ok) {
-            throw new Error('拆解任务失败');
+            const errorData = await response.json().catch(() => ({ detail: '服务器返回未知错误' }));
+            throw new Error(errorData.detail || '拆解任务失败');
         }
 
         await loadTasks();
@@ -424,7 +427,8 @@ async function deleteIPMapping(mappingId) {
         });
 
         if (!response.ok) {
-            throw new Error('删除IP映射失败');
+            const errorData = await response.json().catch(() => ({ detail: '服务器返回未知错误' }));
+            throw new Error(errorData.detail || '删除IP映射失败');
         }
 
         await loadIPMappings();
