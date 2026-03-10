@@ -41,7 +41,7 @@ def get_scheduler():
     if _global_scheduler is None:
         db = next(get_db())
         executor = TaskExecutor(db)
-        _global_scheduler = ReminderScheduler(executor, auto_start=False)
+        _global_scheduler = ReminderScheduler(executor)
         _global_scheduler.scheduler.start()
     return _global_scheduler
 
