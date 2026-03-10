@@ -15,7 +15,7 @@ class ReminderScheduler:
         self.executor = executor
         self.scheduler = AsyncIOScheduler()
 
-    def start(self):
+    async def start(self):
         """启动调度器"""
         self.scheduler.start()
         logger.info("提醒调度器已启动")
