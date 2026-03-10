@@ -42,7 +42,8 @@ def get_scheduler():
         db = next(get_db())
         executor = TaskExecutor(db)
         _global_scheduler = ReminderScheduler(executor)
-        _global_scheduler.scheduler.start()
+        # 在后台线程中启动 scheduler
+        _global_scheduler.start()
     return _global_scheduler
 
 
@@ -54,15 +55,6 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("数据库初始化完成")
 
-    # 启动全局调度器
-    logger.info("启动调度器...")
-    scheduler = get_scheduler()
-    if scheduler:
-        await scheduler.start()
-        logger.info("调度器启动完成")
-    else:
-        logger.warning("调度器未创建，可能是在测试环境")
-
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
 
     yield
@@ -70,7 +62,7 @@ async def lifespan(app: FastAPI):
     # 关闭时
     logger.info("应用关闭中...")
     if _global_scheduler:
-        _global_scheduler.shutdown()
+        _global_scheduler.scheduler.shutdown()
         logger.info("调度器已关闭")
     logger.info("应用已关闭")
 
@@ -86,29 +78,27 @@ app = FastAPI(
 # CORS配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 注册路由
-app.include_router(tasks.router, prefix="/api", tags=["tasks"])
-app.include_router(demo.router, prefix="/api", tags=["demo"])
+app.include_router(tasks.router, prefix="/api")
+app.include_router(demo.router, prefix="/api/demo")
 
 
-# 根路径
 @app.get("/")
 async def root():
     """根路径"""
     return {
         "name": settings.app_name,
         "version": settings.version,
-        "message": "欢迎使用个人任务管理系统",
+        "message": "欢迎使用个人任务管理系统"
     }
 
 
-# 健康检查
 @app.get("/health")
 async def health():
     """健康检查"""
@@ -117,5 +107,4 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000)
