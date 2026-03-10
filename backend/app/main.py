@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.models import init_db
@@ -10,13 +9,13 @@ import logging
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 全局上下文管理器（应用级别）
 _global_context_manager: ContextManager = None
+
 
 def get_context_manager() -> ContextManager:
     """获取全局上下文管理器"""
@@ -25,6 +24,7 @@ def get_context_manager() -> ContextManager:
         # 创建一个临时的 executor 用于初始化
         from app.executor.task_executor import TaskExecutor
         from app.models import get_db
+
         db = next(get_db())
         executor = TaskExecutor(db)
         _global_context_manager = ContextManager(executor)
@@ -39,18 +39,19 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("数据库初始化完成")
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
-    
+
     yield
-    
+
     # 关闭时
     logger.info("应用关闭中...")
+
 
 # 创建应用
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
     debug=settings.debug,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS配置
@@ -74,7 +75,7 @@ async def root():
     return {
         "name": settings.app_name,
         "version": settings.version,
-        "message": "欢迎使用个人任务管理系统"
+        "message": "欢迎使用个人任务管理系统",
     }
 
 
@@ -87,9 +88,5 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)

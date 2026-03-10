@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from app.models import Task, IPMapping, TaskLocation
 from app.executor.external_services import external_services
 from app.executor.code_executor import CodeExecutor
@@ -19,8 +19,7 @@ class TaskExecutor:
         self.db = db
         # 初始化代码执行器（调用 GLM Coding Lite API）
         self.code_executor = CodeExecutor(
-            api_key=settings.glm_api_key,
-            model=settings.glm_model
+            api_key=settings.glm_api_key, model=settings.glm_model
         )
         # 添加 external_services 作为属性
         self.external_services = external_services
@@ -34,7 +33,7 @@ class TaskExecutor:
         priority: int = 0,
         due_time: Optional[datetime] = None,
         location: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Task:
         """创建任务"""
         task = Task(
@@ -45,7 +44,7 @@ class TaskExecutor:
             priority=priority,
             due_time=due_time,
             location=location,
-            status="pending"
+            status="pending",
         )
         self.db.add(task)
         self.db.commit()
@@ -62,7 +61,7 @@ class TaskExecutor:
         self,
         category: Optional[str] = None,
         status: Optional[str] = None,
-        parent_id: Optional[int] = None
+        parent_id: Optional[int] = None,
     ) -> List[Task]:
         """获取所有任务"""
         query = self.db.query(Task)
@@ -78,11 +77,7 @@ class TaskExecutor:
         tasks = query.order_by(Task.priority.desc(), Task.created_at.desc()).all()
         return tasks
 
-    async def update_task(
-        self,
-        task_id: int,
-        **kwargs
-    ) -> Optional[Task]:
+    async def update_task(self, task_id: int, **kwargs) -> Optional[Task]:
         """更新任务"""
         task = await self.get_task(task_id)
         if not task:
@@ -105,12 +100,11 @@ class TaskExecutor:
             return None
 
         # 检查是否有未完成的子任务
-        incomplete_subtasks = self.db.query(Task).filter(
-            and_(
-                Task.parent_id == task_id,
-                Task.status != "completed"
-            )
-        ).count()
+        incomplete_subtasks = (
+            self.db.query(Task)
+            .filter(and_(Task.parent_id == task_id, Task.status != "completed"))
+            .count()
+        )
 
         if incomplete_subtasks > 0:
             raise ValueError("请先完成所有子任务")
@@ -133,12 +127,12 @@ class TaskExecutor:
         logger.info(f"删除任务成功: {task_id}")
         return True
 
-    async def get_category_by_location(self, ip: str, location: Dict[str, Any]) -> Optional[str]:
+    async def get_category_by_location(
+        self, ip: str, location: Dict[str, Any]
+    ) -> Optional[str]:
         """根据IP/位置获取分类"""
         # 先查找IP映射
-        mapping = self.db.query(IPMapping).filter(
-            IPMapping.ip_pattern == ip
-        ).first()
+        mapping = self.db.query(IPMapping).filter(IPMapping.ip_pattern == ip).first()
 
         if mapping:
             return mapping.category
@@ -149,18 +143,14 @@ class TaskExecutor:
         return None
 
     async def record_task_location(
-        self,
-        task_id: int,
-        ip: str,
-        location: Dict[str, Any],
-        category: str
+        self, task_id: int, ip: str, location: Dict[str, Any], category: str
     ):
         """记录任务位置"""
         task_location = TaskLocation(
             task_id=task_id,
             ip=ip,
             location=json.dumps(location) if location else None,
-            category=category
+            category=category,
         )
         self.db.add(task_location)
         self.db.commit()
@@ -169,24 +159,24 @@ class TaskExecutor:
     async def get_location_statistics(self) -> List[Dict[str, Any]]:
         """获取位置统计"""
         # 统计每个IP/位置的任务分类分布
-        stats = self.db.query(
-            TaskLocation.ip,
-            TaskLocation.category,
-            Task.id.label('task_count')
-        ).join(
-            Task, TaskLocation.task_id == Task.id
-        ).group_by(
-            TaskLocation.ip,
-            TaskLocation.category
-        ).all()
+        stats = (
+            self.db.query(
+                TaskLocation.ip, TaskLocation.category, Task.id.label("task_count")
+            )
+            .join(Task, TaskLocation.task_id == Task.id)
+            .group_by(TaskLocation.ip, TaskLocation.category)
+            .all()
+        )
 
         results = []
         for stat in stats:
-            results.append({
-                "ip": stat.ip,
-                "category": stat.category,
-                "task_count": stat.task_count
-            })
+            results.append(
+                {
+                    "ip": stat.ip,
+                    "category": stat.category,
+                    "task_count": stat.task_count,
+                }
+            )
 
         return results
 
@@ -195,12 +185,12 @@ class TaskExecutor:
         ip_pattern: str,
         category: str,
         auto: bool = True,
-        manual_override: bool = False
+        manual_override: bool = False,
     ):
         """创建或更新IP映射"""
-        mapping = self.db.query(IPMapping).filter(
-            IPMapping.ip_pattern == ip_pattern
-        ).first()
+        mapping = (
+            self.db.query(IPMapping).filter(IPMapping.ip_pattern == ip_pattern).first()
+        )
 
         if mapping:
             mapping.category = category
@@ -212,7 +202,7 @@ class TaskExecutor:
                 ip_pattern=ip_pattern,
                 category=category,
                 auto=auto,
-                manual_override=manual_override
+                manual_override=manual_override,
             )
             self.db.add(mapping)
 
@@ -221,10 +211,13 @@ class TaskExecutor:
 
     async def get_all_ip_mappings(self) -> List[IPMapping]:
         """获取所有IP映射"""
-        mappings = self.db.query(IPMapping).order_by(
-            IPMapping.auto.desc(),  # 自动生成的排前面
-            IPMapping.created_at.desc()
-        ).all()
+        mappings = (
+            self.db.query(IPMapping)
+            .order_by(
+                IPMapping.auto.desc(), IPMapping.created_at.desc()  # 自动生成的排前面
+            )
+            .all()
+        )
         return mappings
 
     async def delete_ip_mapping(self, mapping_id: int) -> bool:
@@ -238,12 +231,7 @@ class TaskExecutor:
         logger.info(f"删除IP映射成功: {mapping_id}")
         return True
 
-    async def send_reminder(
-        self,
-        task: Task,
-        reminder_type: str,
-        **kwargs
-    ):
+    async def send_reminder(self, task: Task, reminder_type: str, **kwargs):
         """发送提醒"""
         if reminder_type == "time":
             message = f"⏰ 时间提醒\n\n任务：{task.title}\n分类：{task.category}\n状态：{task.status}"
@@ -274,7 +262,7 @@ class TaskExecutor:
         self,
         task_description: str,
         task_type: str = "general",
-        context: Optional[str] = None
+        context: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         执行代码生成任务
@@ -292,20 +280,19 @@ class TaskExecutor:
         Returns:
             执行结果字典
         """
-        logger.info(f"执行代码生成任务: type={task_type}, description={task_description[:100]}...")
+        logger.info(
+            f"执行代码生成任务: type={task_type}, description={task_description[:100]}..."
+        )
 
         if task_type == "sql":
             return await self.code_executor.execute_sql_query(
-                query=task_description,
-                description=context or "数据库查询任务"
+                query=task_description, description=context or "数据库查询任务"
             )
         elif task_type == "api":
             return await self.code_executor.generate_api_endpoint(
-                endpoint_description=task_description,
-                context=context
+                endpoint_description=task_description, context=context
             )
         else:
             return await self.code_executor.execute_code_task(
-                prompt=task_description,
-                context=context
+                prompt=task_description, context=context
             )

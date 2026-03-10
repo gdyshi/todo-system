@@ -1,4 +1,5 @@
 """测试双层架构的 API 端点"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ router = APIRouter(prefix="/demo", tags=["demo"])
 
 class CodeGenerationRequest(BaseModel):
     """代码生成请求"""
+
     task_id: Optional[int] = None
     operation: str = "query"  # query, create_api, analyze
     custom_prompt: Optional[str] = None
@@ -19,6 +21,7 @@ class CodeGenerationRequest(BaseModel):
 
 class CodeGenerationResponse(BaseModel):
     """代码生成响应"""
+
     success: bool
     operation: str
     code: Optional[str] = None
@@ -27,10 +30,7 @@ class CodeGenerationResponse(BaseModel):
 
 
 @router.post("/generate-code", response_model=CodeGenerationResponse)
-async def generate_code(
-    request: CodeGenerationRequest,
-    db: Session = Depends(get_db)
-):
+async def generate_code(request: CodeGenerationRequest, db: Session = Depends(get_db)):
     """
     测试双层架构的代码生成
 
@@ -46,7 +46,7 @@ async def generate_code(
     if request.custom_prompt:
         result = await orchestrator.executor.execute_code_generation(
             task_description=request.custom_prompt,
-            task_type=orchestrator._determine_task_type(request.operation)
+            task_type=orchestrator._determine_task_type(request.operation),
         )
         operation = request.operation
     else:
@@ -57,8 +57,7 @@ async def generate_code(
                 raise HTTPException(status_code=404, detail="任务不存在")
 
             result = await orchestrator.generate_and_execute_code(
-                task=task,
-                operation=request.operation
+                task=task, operation=request.operation
             )
             operation = f"{request.operation} (task #{task.id})"
         else:
@@ -68,11 +67,10 @@ async def generate_code(
                 title="测试任务",
                 category="demo",
                 description="这是一个演示双层架构的测试任务",
-                status="pending"
+                status="pending",
             )
             result = await orchestrator.generate_and_execute_code(
-                task=task,
-                operation=request.operation
+                task=task, operation=request.operation
             )
             operation = f"{request.operation} (demo)"
 
@@ -81,7 +79,7 @@ async def generate_code(
         operation=operation,
         code=result.get("code"),
         explanation=result.get("explanation"),
-        error=result.get("error")
+        error=result.get("error"),
     )
 
 
@@ -103,13 +101,13 @@ async def get_architecture_info():
                     "持有业务上下文（任务分类、历史记录）",
                     "生成精确的 prompt",
                     "监控执行进度，失败后调整 prompt 重试",
-                    "调用执行层"
+                    "调用执行层",
                 ],
                 "does_not": [
                     "直接编写代码",
                     "访问生产数据库（只读权限）",
-                    "调用外部 API（除了 GLM Coding Lite）"
-                ]
+                    "调用外部 API（除了 GLM Coding Lite）",
+                ],
             },
             "execution": {
                 "name": "CodeExecutor (GLM Coding Lite)",
@@ -118,14 +116,10 @@ async def get_architecture_info():
                     "接收编排层的 prompt",
                     "调用 GLM Coding Lite API 生成代码",
                     "返回生成的代码和解释",
-                    "专注于技术实现"
+                    "专注于技术实现",
                 ],
-                "does_not": [
-                    "持有业务上下文",
-                    "访问生产数据库",
-                    "理解业务逻辑"
-                ]
-            }
+                "does_not": ["持有业务上下文", "访问生产数据库", "理解业务逻辑"],
+            },
         },
         "flow": [
             "用户 → 编排层（理解需求）",
@@ -133,8 +127,8 @@ async def get_architecture_info():
             "编排层 → 执行层（调用 GLM API）",
             "执行层 → GLM Coding Lite（生成代码）",
             "执行层 → 编排层（返回结果）",
-            "编排层 → 用户（处理结果）"
+            "编排层 → 用户（处理结果）",
         ],
         "based_on": "OpenClaw + Claude Code 双层架构",
-        "adaptation": "使用 GLM Coding Lite 替代 Claude Code"
+        "adaptation": "使用 GLM Coding Lite 替代 Claude Code",
     }

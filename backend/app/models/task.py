@@ -8,14 +8,19 @@ Base = declarative_base()
 
 class Task(Base):
     """任务模型"""
+
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text)
     category = Column(String(50), nullable=False)  # work/life/education
-    status = Column(String(50), nullable=False, default="pending")  # pending/in_progress/completed
-    parent_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
+    status = Column(
+        String(50), nullable=False, default="pending"
+    )  # pending/in_progress/completed
+    parent_id = Column(
+        Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True
+    )
     priority = Column(Integer, default=0)  # 0-9
     due_time = Column(DateTime, nullable=True)
     location = Column(Text, nullable=True)  # JSON格式存储坐标
@@ -41,12 +46,17 @@ class Task(Base):
             "reminder_sent": self.reminder_sent,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "subtasks": [subtask.to_dict() for subtask in self.subtasks] if self.subtasks else []
+            "subtasks": (
+                [subtask.to_dict() for subtask in self.subtasks]
+                if self.subtasks
+                else []
+            ),
         }
 
 
 class IPMapping(Base):
     """IP映射模型"""
+
     __tablename__ = "ip_mappings"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -66,16 +76,19 @@ class IPMapping(Base):
             "auto": self.auto,
             "manual_override": self.manual_override,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
 
 class TaskLocation(Base):
     """任务位置记录模型"""
+
     __tablename__ = "task_locations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
+    task_id = Column(
+        Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+    )
     ip = Column(String(100), nullable=False)
     location = Column(Text, nullable=True)  # JSON格式
     category = Column(String(50), nullable=False)
@@ -89,5 +102,5 @@ class TaskLocation(Base):
             "ip": self.ip,
             "location": self.location,
             "category": self.category,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

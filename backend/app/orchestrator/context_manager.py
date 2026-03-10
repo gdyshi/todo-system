@@ -1,4 +1,3 @@
-from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from typing import Dict, Any, Optional
 import logging
@@ -8,12 +7,13 @@ logger = logging.getLogger(__name__)
 
 class Context:
     """上下文数据类"""
+
     def __init__(
         self,
         ip: str,
         location: Optional[Dict[str, Any]] = None,
         category: Optional[str] = None,
-        mode: str = "auto"
+        mode: str = "auto",
     ):
         self.ip = ip
         self.location = location
@@ -41,9 +41,7 @@ class ContextManager:
         # 1. 检查是否手动指定
         if self.current_mode == "manual":
             return Context(
-                ip=client_ip,
-                mode="manual",
-                category=self._get_manual_category()
+                ip=client_ip, mode="manual", category=self._get_manual_category()
             )
 
         # 2. 自动检测
@@ -61,10 +59,7 @@ class ContextManager:
 
         # 创建上下文
         context = Context(
-            ip=client_ip,
-            location=user_location,
-            category=category,
-            mode="auto"
+            ip=client_ip, location=user_location, category=category, mode="auto"
         )
 
         # 缓存结果
@@ -89,11 +84,7 @@ class ContextManager:
         return getattr(self, "_manual_category", None)
 
     async def learn_mapping(
-        self,
-        task_id: int,
-        ip: str,
-        location: Dict[str, Any],
-        category: str
+        self, task_id: int, ip: str, location: Dict[str, Any], category: str
     ):
         """
         自动学习IP/位置映射
@@ -105,10 +96,7 @@ class ContextManager:
         """
         # 记录关联关系
         await self.executor.record_task_location(
-            task_id=task_id,
-            ip=ip,
-            location=location,
-            category=category
+            task_id=task_id, ip=ip, location=location, category=category
         )
 
         # 如果数据足够，自动生成规则
@@ -149,11 +137,11 @@ class ContextManager:
                 # 如果某个分类占比>80%，自动生成规则
                 if ratio > 0.8:
                     await self.executor.upsert_ip_mapping(
-                        ip_pattern=ip,
-                        category=category,
-                        auto=True
+                        ip_pattern=ip, category=category, auto=True
                     )
-                    logger.info(f"自动生成IP映射规则: {ip} -> {category} (占比{ratio:.2%})")
+                    logger.info(
+                        f"自动生成IP映射规则: {ip} -> {category} (占比{ratio:.2%})"
+                    )
 
     def clear_cache(self):
         """清空缓存"""
