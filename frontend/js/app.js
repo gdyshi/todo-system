@@ -1,7 +1,5 @@
-// API配置
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api'
-    : '/api';
+// API配置 - 使用绝对 URL，避免跨端口访问问题
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // 应用状态
 let currentFilter = 'all';

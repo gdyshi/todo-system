@@ -2,7 +2,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.executor import TaskExecutor
 from app.models import Task
 from datetime import datetime, timedelta
-from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,11 +13,14 @@ class ReminderScheduler:
     def __init__(self, executor: TaskExecutor):
         self.executor = executor
         self.scheduler = AsyncIOScheduler()
+        self._started = False
 
-    async def start(self):
-        """启动调度器"""
-        self.scheduler.start()
-        logger.info("提醒调度器已启动")
+    def start(self):
+        """启动调度器（同步方法）"""
+        if not self._started:
+            self.scheduler.start()
+            self._started = True
+            logger.info("提醒调度器已启动")
 
     async def schedule_reminders(self, task: Task):
         """
@@ -62,17 +64,26 @@ class ReminderScheduler:
         # 添加提醒任务
         if reminder_time_1day > now:
             self._add_reminder_job(
-                task.id, reminder_time_1day, "时间提醒", f"任务【{task.title}】将在 1 天后截止"
+                task.id,
+                reminder_time_1day,
+                "时间提醒",
+                f"任务【{task.title}】将在 1 天后截止",
             )
 
         if reminder_time_1hour > now:
             self._add_reminder_job(
-                task.id, reminder_time_1hour, "时间提醒", f"任务【{task.title}】将在 1 小时后截止"
+                task.id,
+                reminder_time_1hour,
+                "时间提醒",
+                f"任务【{task.title}】将在 1 小时后截止",
             )
 
         if reminder_time_10min > now:
             self._add_reminder_job(
-                task.id, reminder_time_10min, "时间提醒", f"任务【{task.title}】将在 10 分钟后截止"
+                task.id,
+                reminder_time_10min,
+                "时间提醒",
+                f"任务【{task.title}】将在 10 分钟后截止",
             )
 
         # 截止时间提醒
@@ -80,7 +91,9 @@ class ReminderScheduler:
             task.id, due_time, "时间提醒", f"任务【{task.title}】已到截止时间"
         )
 
-    def _add_reminder_job(self, task_id: int, run_time: datetime, reminder_type: str, message: str):
+    def _add_reminder_job(
+        self, task_id: int, run_time: datetime, reminder_type: str, message: str
+    ):
         """
         添加提醒任务
 
@@ -96,8 +109,8 @@ class ReminderScheduler:
             self._trigger_time_reminder,
             trigger="date",
             run_date=run_time,
-            args=[task_id, reminder_time, message],
-            id=job_id
+            args=[task_id, run_time, message],
+            id=job_id,
         )
         logger.info(f"安排时间提醒: task={task_id}, time={run_time}")
 
@@ -116,11 +129,13 @@ class ReminderScheduler:
             trigger="interval",
             minutes=5,
             args=[task.id],
-            id=job_id
+            id=job_id,
         )
-        logger.info(f"安排位置提醒检查: task={task_id}")
+        logger.info(f"安排位置提醒检查: task={task.id}")
 
-    async def _trigger_time_reminder(self, task_id: int, reminder_time: datetime, message: str):
+    async def _trigger_time_reminder(
+        self, task_id: int, reminder_time: datetime, message: str
+    ):
         """
         触发时间提醒
 
@@ -143,9 +158,7 @@ class ReminderScheduler:
 
         # 发送提醒
         await self.executor.send_reminder(
-            task=task,
-            type="time",
-            trigger_time=reminder_time
+            task=task, type="time", trigger_time=reminder_time
         )
 
         logger.info(f"触发时间提醒: task_id={task_id}")
@@ -169,7 +182,7 @@ class ReminderScheduler:
             # 移除定时任务
             try:
                 self.scheduler.remove_job(f"task_{task_id}_location_check")
-            except:
+            except Exception:
                 pass
             return
 
