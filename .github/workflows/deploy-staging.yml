@@ -1,0 +1,43 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-backend-staging:
+    name: 部署后端到 Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 部署到 Render Staging
+        run: |
+          curl -X POST ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }} \
+            -H "Content-Type: application/json"
+
+      - name: 等待部署
+        run: sleep 60
+
+  deploy-frontend-staging:
+    name: 部署前端到 Staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 部署到 Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: --prod

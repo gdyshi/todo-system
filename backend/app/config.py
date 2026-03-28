@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # GLM Coding Lite API 配置（双层架构 - 执行层）
     glm_api_key: str = "357cd9367f801b6df81b655113572404.byyt1f6Wd6AvKXpU"
     glm_model: str = "glm-4.7"
-    glm_base_url: str = "https://api.z.ai/api/coding/paas/v4/chat/completions"
+    glm_base_url: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
     # Telegram配置（用于提醒）
     telegram_bot_token: Optional[str] = None

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 _global_context_manager: ContextManager = None
 _global_scheduler = None
 
+
 def get_context_manager() -> ContextManager:
     """获取全局上下文管理器"""
     global _global_context_manager
@@ -42,8 +43,7 @@ def get_scheduler():
         db = next(get_db())
         executor = TaskExecutor(db)
         _global_scheduler = ReminderScheduler(executor)
-        # 在后台线程中启动 scheduler
-        _global_scheduler.start()
+        # 不在这里启动，在lifespan中启动
     return _global_scheduler
 
 
@@ -55,6 +55,10 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("数据库初始化完成")
 
+    # 启动调度器
+    scheduler = get_scheduler()
+    scheduler.start()
+
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
 
     yield
@@ -62,8 +66,11 @@ async def lifespan(app: FastAPI):
     # 关闭时
     logger.info("应用关闭中...")
     if _global_scheduler:
-        _global_scheduler.scheduler.shutdown()
-        logger.info("调度器已关闭")
+        try:
+            _global_scheduler.scheduler.shutdown(wait=False)
+            logger.info("调度器已关闭")
+        except Exception as e:
+            logger.warning(f"调度器关闭时出错: {e}")
     logger.info("应用已关闭")
 
 
@@ -95,7 +102,7 @@ async def root():
     return {
         "name": settings.app_name,
         "version": settings.version,
-        "message": "欢迎使用个人任务管理系统"
+        "message": "欢迎使用个人任务管理系统",
     }
 
 
@@ -107,4 +114,5 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000)
