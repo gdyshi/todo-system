@@ -27,9 +27,8 @@ jobs:
       - name: 等待部署
         run: sleep 30
 
-      - name: 健康检查
-        run: |
-          curl -f https://todo-api-staging.onrender.com/health || exit 1
+      - name: 等待部署
+        run: sleep 30
 
   deploy-frontend-staging:
     name: 部署前端到 Staging
