@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
-from app.orchestrator.reminder_scheduler import ReminderScheduler
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging

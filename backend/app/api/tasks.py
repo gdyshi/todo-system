@@ -40,18 +40,13 @@ class CategoryMode(BaseModel):
 # 依赖注入
 def get_orchestrator(db: Session = Depends(get_db)) -> TaskOrchestrator:
     """获取编排器"""
-    import os
     from app.main import get_context_manager, get_scheduler
 
-    # 在测试环境中禁用 scheduler
-    auto_start_scheduler = os.getenv("PYTEST_CURRENT_TEST") is None
     context_manager = get_context_manager()
     scheduler = get_scheduler()
 
-    # 注意：不在 Orchestrator 中启动 scheduler，已经在 main.py 中启动了
-    return TaskOrchestrator(
-        db, context_manager=context_manager, scheduler=scheduler
-    )
+    # 注意：scheduler 已经在 main.py 的 lifespan 中启动了
+    return TaskOrchestrator(db, context_manager=context_manager, scheduler=scheduler)
 
 
 # API端点
