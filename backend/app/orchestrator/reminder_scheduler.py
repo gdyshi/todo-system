@@ -65,17 +65,26 @@ class ReminderScheduler:
         # 添加提醒任务
         if reminder_time_1day > now:
             self._add_reminder_job(
-                task.id, reminder_time_1day, "时间提醒", f"任务【{task.title}】将在 1 天后截止"
+                task.id,
+                reminder_time_1day,
+                "时间提醒",
+                f"任务【{task.title}】将在 1 天后截止",
             )
 
         if reminder_time_1hour > now:
             self._add_reminder_job(
-                task.id, reminder_time_1hour, "时间提醒", f"任务【{task.title}】将在 1 小时后截止"
+                task.id,
+                reminder_time_1hour,
+                "时间提醒",
+                f"任务【{task.title}】将在 1 小时后截止",
             )
 
         if reminder_time_10min > now:
             self._add_reminder_job(
-                task.id, reminder_time_10min, "时间提醒", f"任务【{task.title}】将在 10 分钟后截止"
+                task.id,
+                reminder_time_10min,
+                "时间提醒",
+                f"任务【{task.title}】将在 10 分钟后截止",
             )
 
         # 截止时间提醒
@@ -83,7 +92,9 @@ class ReminderScheduler:
             task.id, due_time, "时间提醒", f"任务【{task.title}】已到截止时间"
         )
 
-    def _add_reminder_job(self, task_id: int, run_time: datetime, reminder_type: str, message: str):
+    def _add_reminder_job(
+        self, task_id: int, run_time: datetime, reminder_type: str, message: str
+    ):
         """
         添加提醒任务
 
@@ -100,7 +111,7 @@ class ReminderScheduler:
             trigger="date",
             run_date=run_time,
             args=[task_id, reminder_time, message],
-            id=job_id
+            id=job_id,
         )
         logger.info(f"安排时间提醒: task={task_id}, time={run_time}")
 
@@ -119,11 +130,13 @@ class ReminderScheduler:
             trigger="interval",
             minutes=5,
             args=[task.id],
-            id=job_id
+            id=job_id,
         )
         logger.info(f"安排位置提醒检查: task={task_id}")
 
-    async def _trigger_time_reminder(self, task_id: int, reminder_time: datetime, message: str):
+    async def _trigger_time_reminder(
+        self, task_id: int, reminder_time: datetime, message: str
+    ):
         """
         触发时间提醒
 
@@ -146,9 +159,7 @@ class ReminderScheduler:
 
         # 发送提醒
         await self.executor.send_reminder(
-            task=task,
-            type="time",
-            trigger_time=reminder_time
+            task=task, type="time", trigger_time=reminder_time
         )
 
         logger.info(f"触发时间提醒: task_id={task_id}")

@@ -49,9 +49,7 @@ def get_orchestrator(db: Session = Depends(get_db)) -> TaskOrchestrator:
     scheduler = get_scheduler()
 
     # 注意：不在 Orchestrator 中启动 scheduler，已经在 main.py 中启动了
-    return TaskOrchestrator(
-        db, context_manager=context_manager, scheduler=scheduler
-    )
+    return TaskOrchestrator(db, context_manager=context_manager, scheduler=scheduler)
 
 
 # API端点
