@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 _global_context_manager: ContextManager = None
 _global_scheduler = None
 
+
 def get_context_manager() -> ContextManager:
     """获取全局上下文管理器"""
     global _global_context_manager
@@ -53,11 +54,11 @@ async def lifespan(app: FastAPI):
     logger.info("正在初始化数据库...")
     init_db()
     logger.info("数据库初始化完成")
-    
+
     # 启动调度器
     scheduler = get_scheduler()
     scheduler.start()
-    
+
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
 
     yield
@@ -101,7 +102,7 @@ async def root():
     return {
         "name": settings.app_name,
         "version": settings.version,
-        "message": "欢迎使用个人任务管理系统"
+        "message": "欢迎使用个人任务管理系统",
     }
 
 
@@ -113,4 +114,5 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000)

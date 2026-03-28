@@ -81,25 +81,25 @@ class ExternalServices:
     async def send_telegram_message_stream(self, message_stream) -> bool:
         """
         流式发送 Telegram 消息
-        
+
         支持实时发送长内容，避免等待完整生成
-        
+
         Args:
             message_stream: 异步生成器，产生消息片段
-            
+
         Returns:
             bool: 是否全部发送成功
         """
         import asyncio
-        
+
         if not settings.telegram_bot_token or not settings.telegram_chat_id:
             logger.warning("Telegram配置未设置，跳过发送")
             return False
-        
+
         try:
             # 获取第一个消息片段
             first_chunk = await anext(message_stream)
-            
+
             async with httpx.AsyncClient(timeout=10.0) as client:
                 # 发送初始消息
                 response = await client.post(
@@ -110,21 +110,21 @@ class ExternalServices:
                         "parse_mode": "Markdown",
                     },
                 )
-                
+
                 if response.status_code != 200:
                     logger.error(f"Telegram消息发送失败: {response.text}")
                     return False
-                
+
                 result = response.json()
                 message_id = result.get("message_id")
-                
+
                 # 流式更新消息
                 full_message = first_chunk
-                
+
                 try:
                     async for new_chunk in message_stream:
                         full_message += new_chunk
-                        
+
                         # Telegram 消息最大长度限制（Markdown 模式）
                         max_length = 4000
                         if len(full_message) > max_length:
@@ -137,15 +137,15 @@ class ExternalServices:
                                     "parse_mode": "Markdown",
                                 },
                             )
-                            
+
                             if response.status_code != 200:
                                 logger.error(f"Telegram消息发送失败: {response.text}")
                                 return False
-                            
+
                             result = response.json()
                             message_id = result.get("message_id")
                             full_message = full_message[max_length:]
-                        
+
                         else:
                             # 更新当前消息（流式编辑）
                             response = await client.post(
@@ -157,22 +157,22 @@ class ExternalServices:
                                     "parse_mode": "Markdown",
                                 },
                             )
-                            
+
                             if response.status_code != 200:
                                 logger.error(f"Telegram消息编辑失败: {response.text}")
                                 return False
-                            
+
                             # 添加延迟，避免触发 Telegram API 限制
                             # Telegram 限制：每秒最多 1 次编辑
                             await asyncio.sleep(0.5)
-                    
+
                     logger.info("Telegram流式消息发送完成")
                     return True
-                    
+
                 except StopAsyncIteration:
                     logger.info("流式消息发送完成")
                     return True
-            
+
         except Exception as e:
             logger.error(f"发送Telegram流式消息异常: {e}")
             return False
