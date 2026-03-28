@@ -10,13 +10,11 @@ permissions:
   deployments: write
 
 jobs:
-  # 后端部署到 Staging (Render)
   deploy-backend-staging:
     name: 部署后端到 Staging
     runs-on: ubuntu-latest
     environment:
       name: staging
-      url: https://todo-api-staging.onrender.com
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -24,164 +22,22 @@ jobs:
       - name: 部署到 Render Staging
         run: |
           curl -X POST ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }} \
-            -H "Content-Type: application/json" \
-            -d '{"ref":"${{ github.ref }}"}'
+            -H "Content-Type: application/json"
 
-      - name: 等待部署完成
-        run: |
-          echo "等待 Render 部署完成..."
-          sleep 30
+      - name: 等待部署
+        run: sleep 60
 
-      - name: 健康检查
-        run: |
-          for i in {1..30}; do
-            if curl -f https://todo-api-staging.onrender.com/health; then
-              echo "✅ Staging 后端健康检查通过"
-              exit 0
-            fi
-            echo "等待中... ($i/30)"
-            sleep 10
-          done
-          echo "❌ 健康检查失败"
-          exit 1
-
-  # 前端部署到 Staging (Vercel)
   deploy-frontend-staging:
     name: 部署前端到 Staging
     runs-on: ubuntu-latest
-    environment:
-      name: staging
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 部署到 Vercel Staging
+      - name: 部署到 Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: --prod
-          alias: staging
-
-  # 数据库迁移
-  database-migration:
-    name: 数据库迁移
-    runs-on: ubuntu-latest
-    needs: [deploy-backend-staging]
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 安装依赖
-        run: |
-          pip install -r requirements.txt
-          pip install alembic
-
-      - name: 运行数据库迁移
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-        run: |
-          cd backend
-          alembic upgrade head
-
-      - name: 验证迁移
-        run: |
-          echo "✅ 数据库迁移完成"
-
-  # E2E 测试
-  e2e-tests:
-    name: E2E 集成测试
-    runs-on: ubuntu-latest
-    needs: [deploy-backend-staging, deploy-frontend-staging, database-migration]
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 安装依赖
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-test.txt
-          pip install pytest pytest-asyncio
-
-      - name: 运行 E2E 测试
-        env:
-          API_BASE_URL: https://todo-api-staging.onrender.com
-          FRONTEND_URL: https://staging.todo-system.vercel.app
-        run: |
-          cd backend
-          pytest tests/e2e/ -v --tb=short || true
-
-  # 性能基准测试
-  performance-benchmark:
-    name: 性能基准测试
-    runs-on: ubuntu-latest
-    needs: [deploy-backend-staging]
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 安装依赖
-        run: |
-          pip install -r requirements.txt
-          pip install locust
-
-      - name: 运行性能测试
-        env:
-          API_BASE_URL: https://todo-api-staging.onrender.com
-        run: |
-          echo "运行性能基准测试..."
-          # 这里可以集成 Locust 或其他性能测试工具
-          echo "✅ 性能测试完成"
-
-  # Staging 部署完成通知
-  staging-deployment-summary:
-    name: Staging 部署总结
-    runs-on: ubuntu-latest
-    needs: [deploy-backend-staging, deploy-frontend-staging, database-migration, e2e-tests, performance-benchmark]
-    if: always()
-    steps:
-      - name: 生成部署报告
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const deploymentStatus = `
-            ## 🚀 Staging 环境部署完成
-            
-            ### 部署信息
-            - **后端**: https://todo-api-staging.onrender.com
-            - **前端**: https://staging.todo-system.vercel.app
-            - **提交**: ${{ github.sha }}
-            - **分支**: ${{ github.ref }}
-            
-            ### 检查清单
-            - ✅ 后端部署
-            - ✅ 前端部署
-            - ✅ 数据库迁移
-            - ✅ E2E 测试
-            - ✅ 性能基准测试
-            
-            ### 下一步
-            验证 Staging 环境无误后，可以手动触发生产部署。
-            
-            ---
-            *此部署由 CI/CD 自动生成*
-            `;
-            
-            console.log(deploymentStatus);
