@@ -25,10 +25,7 @@ jobs:
             -H "Content-Type: application/json"
 
       - name: 等待部署
-        run: sleep 30
-
-      - name: 等待部署
-        run: sleep 30
+        run: sleep 60
 
   deploy-frontend-staging:
     name: 部署前端到 Staging
