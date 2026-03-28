@@ -2,7 +2,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.executor import TaskExecutor
 from app.models import Task
 from datetime import datetime, timedelta
-from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -110,7 +109,7 @@ class ReminderScheduler:
             self._trigger_time_reminder,
             trigger="date",
             run_date=run_time,
-            args=[task_id, reminder_time, message],
+            args=[task_id, run_time, message],
             id=job_id,
         )
         logger.info(f"安排时间提醒: task={task_id}, time={run_time}")
@@ -132,7 +131,7 @@ class ReminderScheduler:
             args=[task.id],
             id=job_id,
         )
-        logger.info(f"安排位置提醒检查: task={task_id}")
+        logger.info(f"安排位置提醒检查: task={task.id}")
 
     async def _trigger_time_reminder(
         self, task_id: int, reminder_time: datetime, message: str
@@ -183,7 +182,7 @@ class ReminderScheduler:
             # 移除定时任务
             try:
                 self.scheduler.remove_job(f"task_{task_id}_location_check")
-            except:
+            except Exception:
                 pass
             return
 
