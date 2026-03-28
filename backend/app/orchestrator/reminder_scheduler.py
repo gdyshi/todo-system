@@ -14,11 +14,14 @@ class ReminderScheduler:
     def __init__(self, executor: TaskExecutor):
         self.executor = executor
         self.scheduler = AsyncIOScheduler()
+        self._started = False
 
-    async def start(self):
-        """启动调度器"""
-        self.scheduler.start()
-        logger.info("提醒调度器已启动")
+    def start(self):
+        """启动调度器（同步方法）"""
+        if not self._started:
+            self.scheduler.start()
+            self._started = True
+            logger.info("提醒调度器已启动")
 
     async def schedule_reminders(self, task: Task):
         """

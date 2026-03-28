@@ -42,8 +42,7 @@ def get_scheduler():
         db = next(get_db())
         executor = TaskExecutor(db)
         _global_scheduler = ReminderScheduler(executor)
-        # 在后台线程中启动 scheduler
-        _global_scheduler.start()
+        # 不在这里启动，在lifespan中启动
     return _global_scheduler
 
 
@@ -54,7 +53,11 @@ async def lifespan(app: FastAPI):
     logger.info("正在初始化数据库...")
     init_db()
     logger.info("数据库初始化完成")
-
+    
+    # 启动调度器
+    scheduler = get_scheduler()
+    scheduler.start()
+    
     logger.info(f"{settings.app_name} v{settings.version} 启动成功！")
 
     yield
@@ -62,8 +65,11 @@ async def lifespan(app: FastAPI):
     # 关闭时
     logger.info("应用关闭中...")
     if _global_scheduler:
-        _global_scheduler.scheduler.shutdown()
-        logger.info("调度器已关闭")
+        try:
+            _global_scheduler.scheduler.shutdown(wait=False)
+            logger.info("调度器已关闭")
+        except Exception as e:
+            logger.warning(f"调度器关闭时出错: {e}")
     logger.info("应用已关闭")
 
 
