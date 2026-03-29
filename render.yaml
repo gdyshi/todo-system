@@ -1,5 +1,5 @@
-# Render Blueprint 閰嶇疆
-# 閮ㄧ讲閰嶇疆
+# Render Blueprint 配置
+# 部署配置
 
 services:
   - type: web
