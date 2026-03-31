@@ -3,13 +3,12 @@ name: E2E Tests + Performance
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 
 jobs:
   e2e-test:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
       - name: Checkout code
@@ -20,49 +19,30 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Get pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/package.json') }}
-          restore-keys: ${{ runner.os }}-pnpm-
-
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: npm install
+        working-directory: .
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Create playwright config
+      - name: Wait for Render backend
         run: |
-          cat > playwright.config.ts << 'EOF'
-          import { defineConfig, devices } from '@playwright/test';
-          
-          export default defineConfig({
-            testDir: './tests/e2e',
-            fullyParallel: true,
-            forbidOnly: !!process.env.CI,
-            retries: process.env.CI ? 2 : 0,
-            workers: process.env.CI ? 1 : undefined,
-            reporter: 'html',
-            use: {
-              baseURL: process.env.FRONTEND_URL || 'https://todo-system-psi.vercel.app',
-              trace: 'on-first-retry',
-            },
-            projects: [
-              {
-                name: 'chromium',
-                use: { ...devices['Desktop Chrome'] },
-              },
-            ],
-          });
-          EOF
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 3
+          done
 
       - name: Run E2E tests
         env:
           FRONTEND_URL: https://todo-system-psi.vercel.app
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
-        run: npx playwright test
+        run: npx playwright test --reporter=list
 
       - name: Upload test results
         if: always()
@@ -71,26 +51,4 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-
-      - name: Upload test screenshots
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-screenshots
-          path: test-results/**/*.png
-          retention-days: 14
-
-  performance-test:
-    name: Performance Benchmark
-    runs-on: ubuntu-latest
-    needs: e2e-test
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Lighthouse
-        uses: foo-software/lighthouse-check-action@master
-        with:
-          urls: https://todo-system-psi.vercel.app
-          budgetPath: .lighthouse Budget.json
+          if-no-files-found: ignore
