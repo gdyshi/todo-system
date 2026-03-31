@@ -53,7 +53,7 @@ jobs:
   deploy:
     name: 部署
     needs: health-check
-    if: github.event.inputs.confirm != 'true'
+    if: github.event.inputs.confirm == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     
