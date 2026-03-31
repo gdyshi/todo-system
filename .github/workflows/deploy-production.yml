@@ -57,9 +57,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     
-    environment:
-      NODE_VERSION: '20'
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,8 +75,7 @@ jobs:
 
       - name: Deploy to Render (production)
         if: env.TARGET == 'production'
-        run: |
-          echo "✅ 跳过 Render 手动部署（已配置自动部署）"
+        run: echo "✅ 跳过 Render 手动部署（已配置自动部署）"
 
       - name: Deploy to Render (staging)
         if: env.TARGET == 'staging'
@@ -89,18 +85,10 @@ jobs:
         run: |
           echo "=== 验证部署 ==="
           echo "目标: ${{ env.TARGET }}"
-          
-          # 等待部署完成
           echo "⏳ 等待 30 秒让部署生效..."
           sleep 30
           
-          # 验证
-          if [ "${{ env.TARGET }}" = "production" ]; then
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
-          else
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
-          fi
-          
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
           if [ "$STATUS" = "200" ]; then
             echo "✅ 部署验证通过"
           else
@@ -118,50 +106,3 @@ jobs:
           echo "触发人: ${{ github.actor }}"
           echo "Commit: ${{ github.sha }}"
           echo "==================================="
-
-  rollback:
-    name: Rollback
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.ref != 'refs/heads/master'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: master
-
-      - name: Rollback Render
-        run: |
-          echo "⚠️ 回滚操作 - 谨慎使用"
-          echo "目标: 回滚到上一个稳定版本"
-          
-          # 使用 Render API 获取上一个成功部署
-          PREV_DEPLOY=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys?limit=5&state=live" \
-            | python3 -c "import json,sys; deps=json.load(sys.stdin)[\"deployments\"]; print(deps[0][\"uid\"] if deps else \"none\")")
-          
-          if [ "$PREV_DEPLOY" = "none" ]; then
-            echo "❌ 没有找到可回滚的部署"
-            exit 0
-          fi
-          
-          echo "回滚到: $PREV_DEPLOY"
-          
-          curl -X POST "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys/$PREV_DEPLOY/restart" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json"
-          
-          echo "✅ 回滚请求已发送"
-          echo "新部署 ID: $PREV_DEPLOY"
-
-      - name: Wait and verify
-        run: |
-          echo "⏳ 等待回滚完成..."
-          sleep 60
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ 回滚验证通过"
-          else
-            echo "⚠️ 回滚后健康检查返回: $STATUS (可能还在部署中)"
-          fi
