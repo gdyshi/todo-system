@@ -1,5 +1,8 @@
 // API配置 - 使用绝对 URL，避免跨端口访问问题
-const API_BASE_URL = 'http://localhost:8000/api';
+// 开发环境使用 localhost，生产环境使用 Render 后端地址
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api'
+    : 'https://todo-system-msvx.onrender.com/api';
 
 // 应用状态
 let currentFilter = 'all';
