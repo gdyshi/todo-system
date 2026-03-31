@@ -1,0 +1,167 @@
+name: Manual Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署目标: staging 或 production'
+        type: choice
+        options:
+          - staging
+          - production
+        required: true
+      confirm:
+        description: '确认发布？此操作将部署到生产环境'
+        type: boolean
+        required: true
+
+jobs:
+  health-check:
+    name: 部署前健康检查
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'production'
+    timeout-minutes: 5
+    
+    steps:
+      - name: Check Render backend health
+        run: |
+          echo "=== 部署前健康检查 ==="
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ 后端健康: OK"
+              break
+            fi
+            echo "⏳ 等待后端就绪... ($i/30)"
+            sleep 3
+          done
+          
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ 后端不健康"
+            exit 1
+          fi
+
+      - name: Check Vercel frontend
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-psi.vercel.app || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ 前端健康: OK"
+          else
+            echo "⚠️ 前端返回: $HTTP_CODE (将使用 Staging 部署)"
+          fi
+
+  deploy:
+    name: 部署
+    needs: health-check
+    if: github.event.inputs.confirm != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    environment:
+      NODE_VERSION: '20'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine deploy target
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "TARGET=production"
+            echo "VERCEL_URL=https://todo-system-psi.vercel.app"
+          else
+            echo "TARGET=staging"
+            echo "VERCEL_URL=https://todo-system-git-refs-headsmaster-gdyshis-projects.vercel.app"
+          fi
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
+          echo "VERCEL_URL=$VERCEL_URL" >> $GITHUB_ENV
+
+      - name: Deploy to Render (production)
+        if: env.TARGET == 'production'
+        run: |
+          echo "✅ 跳过 Render 手动部署（已配置自动部署）"
+
+      - name: Deploy to Render (staging)
+        if: env.TARGET == 'staging'
+        run: echo "✅ 跳过（Staging 通过 PR 合并自动部署）"
+
+      - name: Verify deployment
+        run: |
+          echo "=== 验证部署 ==="
+          echo "目标: ${{ env.TARGET }}"
+          
+          # 等待部署完成
+          echo "⏳ 等待 30 秒让部署生效..."
+          sleep 30
+          
+          # 验证
+          if [ "${{ env.TARGET }}" = "production" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+          else
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+          fi
+          
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ 部署验证通过"
+          else
+            echo "❌ 部署验证失败 (HTTP $STATUS)"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "==================================="
+          echo "部署完成"
+          echo "==================================="
+          echo "目标: ${{ env.TARGET }}"
+          echo "时间: $(date)"
+          echo "触发人: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "==================================="
+
+  rollback:
+    name: Rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.ref != 'refs/heads/master'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Rollback Render
+        run: |
+          echo "⚠️ 回滚操作 - 谨慎使用"
+          echo "目标: 回滚到上一个稳定版本"
+          
+          # 使用 Render API 获取上一个成功部署
+          PREV_DEPLOY=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys?limit=5&state=live" \
+            | python3 -c "import json,sys; deps=json.load(sys.stdin)[\"deployments\"]; print(deps[0][\"uid\"] if deps else \"none\")")
+          
+          if [ "$PREV_DEPLOY" = "none" ]; then
+            echo "❌ 没有找到可回滚的部署"
+            exit 0
+          fi
+          
+          echo "回滚到: $PREV_DEPLOY"
+          
+          curl -X POST "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys/$PREV_DEPLOY/restart" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json"
+          
+          echo "✅ 回滚请求已发送"
+          echo "新部署 ID: $PREV_DEPLOY"
+
+      - name: Wait and verify
+        run: |
+          echo "⏳ 等待回滚完成..."
+          sleep 60
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ 回滚验证通过"
+          else
+            echo "⚠️ 回滚后健康检查返回: $STATUS (可能还在部署中)"
+          fi
