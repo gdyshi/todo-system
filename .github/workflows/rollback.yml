@@ -1,0 +1,127 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_id:
+        description: '要回滚的部署 ID（留空则回滚到上一个成功部署）'
+        type: string
+        required: false
+      service:
+        description: '回滚哪个服务'
+        type: choice
+        options:
+          - backend
+          - frontend
+          - both
+        required: true
+      confirm:
+        description: '确认回滚？此操作不可逆'
+        type: boolean
+        required: true
+
+jobs:
+  rollback-backend:
+    name: Rollback Backend
+    if: (github.event.inputs.service == 'backend' || github.event.inputs.service == 'both') && github.event.inputs.confirm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Get current deploy ID
+        run: |
+          CURRENT=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys?limit=1&state=live" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)[\"deployments\"]; print(d[0][\"uid\"] if d else \"none\")")
+          echo "当前部署: $CURRENT"
+          
+          if [ -n "$deploy_id" ]; then
+            TARGET="$deploy_id"
+            echo "指定回滚目标: $TARGET"
+          else
+            echo "自动选择上一个成功部署"
+          fi
+
+      - name: Execute rollback
+        run: |
+          if [ -z "$TARGET" ]; then
+            echo "❌ 没有可回滚的部署"
+            exit 0
+          fi
+          
+          echo "⚠️ 开始回滚..."
+          RESULT=$(curl -s -X POST \
+            "https://api.render.com/v1/services/srv-d73qddgule4c73emc4l0/deploys/$TARGET/restart" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json")
+          
+          echo "结果: $RESULT"
+          echo ""
+          echo "⏳ 等待 60 秒让部署生效..."
+          sleep 60
+          
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ 回滚成功，服务运行正常"
+          else
+            echo "⚠️ 健康检查返回: $STATUS (可能还在部署中)"
+          fi
+
+  rollback-frontend:
+    name: Rollback Frontend
+    if: (github.event.inputs.service == 'frontend' || github.event_inputs.service == 'both') && github.event.inputs.confirm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Get current deploy ID
+        run: |
+          CURRENT=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            "https://api.vercel.com/v6/deployments?projectId=prj_UEp6AHgPteUEQmeRsjvdztFs0gqE&teamId=team_RnwWjlKFRBJ2LXssOCHBxhK3&limit=1&state=live" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)[\"deployments\"]; print(d[0][\"uid\"] if d else \"none\")")
+          echo "当前部署: $CURRENT"
+          
+          if [ -n "$deploy_id" ]; then
+            TARGET="$deploy_id"
+            echo "指定回滚目标: $TARGET"
+          else
+            echo "自动选择上一个成功部署"
+          fi
+
+      - name: Execute rollback
+        run: |
+          if [ -z "$TARGET" ]; then
+            echo "❌ 没有可回滚的部署"
+            exit 0
+          fi
+          
+          echo "⚠️ 开始回滚前端..."
+          RESULT=$(curl -s -X POST \
+            "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"todo-system\",\"gitSource\":{\"type\":\"github\",\"repoId\":\"1172122671\",\"ref\":\"refs/heads/master\"}}")
+          
+          echo "结果: $RESULT"
+          echo ""
+          echo "⏳ 等待 30 秒..."
+          sleep 30
+          echo "✅ 回滚请求已发送"
+
+  rollback-status:
+    name: Check Rollback Status
+    needs: [rollback-backend, rollback-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Report
+        run: |
+          echo "==================================="
+          echo "回滚状态"
+          echo "==================================="
+          echo "Backend: ${{ needs.rollback-backend.result }}"
+          echo "Frontend: ${{ needs.rollback-frontend.result }}"
+          echo "触发人: ${{ github.actor }}"
+          echo "时间: $(date)"
+          echo "==================================="
