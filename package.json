@@ -1,0 +1,22 @@
+{
+  "name": "todo-system-tests",
+  "version": "1.0.0",
+  "description": "E2E and Performance tests for Todo System",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:ci": "playwright test --reporter=github",
+    "performance": "playwright test tests/performance",
+    "lighthouse": "lighthouse https://todo-system-psi.vercel.app --output=json --output-path=./lighthouse-report.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "lighthouse": "^11.4.0"
+  }
+}
