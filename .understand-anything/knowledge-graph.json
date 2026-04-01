@@ -1,0 +1,1163 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "todo-system",
+    "languages": [
+      "python",
+      "javascript",
+      "html",
+      "css",
+      "typescript",
+      "yaml",
+      "markdown"
+    ],
+    "frameworks": [
+      "FastAPI",
+      "SQLAlchemy",
+      "Pydantic",
+      "Uvicorn",
+      "Docker",
+      "GitHub Actions",
+      "Playwright"
+    ],
+    "description": "基于双层架构设计的智能任务管理系统，支持自动分类、任务拆解、时间/地点提醒等功能",
+    "analyzedAt": "2026-04-01T18:35:00+08:00",
+    "gitCommitHash": "9cffc54d70713dce3b5e0d1978a857e7971f5b37"
+  },
+  "nodes": [
+    {
+      "id": "file:backend/app/main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "backend/app/main.py",
+      "summary": "FastAPI 应用入口，配置 CORS、路由注册、生命周期管理",
+      "tags": [
+        "entry",
+        "fastapi",
+        "lifespan"
+      ]
+    },
+    {
+      "id": "file:backend/app/api/tasks.py",
+      "type": "file",
+      "name": "tasks.py",
+      "filePath": "backend/app/api/tasks.py",
+      "summary": "任务 API 路由，提供 CRUD 操作、分类模式管理",
+      "tags": [
+        "api",
+        "router",
+        "tasks"
+      ]
+    },
+    {
+      "id": "file:backend/app/api/demo.py",
+      "type": "file",
+      "name": "demo.py",
+      "filePath": "backend/app/api/demo.py",
+      "summary": "演示 API 端点",
+      "tags": [
+        "api",
+        "demo"
+      ]
+    },
+    {
+      "id": "file:backend/app/models/task.py",
+      "type": "file",
+      "name": "task.py",
+      "filePath": "backend/app/models/task.py",
+      "summary": "SQLAlchemy 数据模型：Task, IPMapping, TaskLocation",
+      "tags": [
+        "model",
+        "sqlalchemy",
+        "database"
+      ]
+    },
+    {
+      "id": "file:backend/app/orchestrator/task_orchestrator.py",
+      "type": "file",
+      "name": "task_orchestrator.py",
+      "filePath": "backend/app/orchestrator/task_orchestrator.py",
+      "summary": "任务编排器 - 编排层核心，负责理解用户意图、智能分类、调用执行层",
+      "tags": [
+        "orchestrator",
+        "business-logic",
+        "core"
+      ]
+    },
+    {
+      "id": "file:backend/app/orchestrator/context_manager.py",
+      "type": "file",
+      "name": "context_manager.py",
+      "filePath": "backend/app/orchestrator/context_manager.py",
+      "summary": "上下文管理器，处理 IP/位置检测、自动分类逻辑",
+      "tags": [
+        "orchestrator",
+        "context",
+        "classification"
+      ]
+    },
+    {
+      "id": "file:backend/app/orchestrator/reminder_scheduler.py",
+      "type": "file",
+      "name": "reminder_scheduler.py",
+      "filePath": "backend/app/orchestrator/reminder_scheduler.py",
+      "summary": "提醒调度器，基于 APScheduler 实现时间/地点提醒",
+      "tags": [
+        "orchestrator",
+        "scheduler",
+        "reminder"
+      ]
+    },
+    {
+      "id": "file:backend/app/executor/task_executor.py",
+      "type": "file",
+      "name": "task_executor.py",
+      "filePath": "backend/app/executor/task_executor.py",
+      "summary": "任务执行器 - 执行层核心，数据库操作、外部服务调用",
+      "tags": [
+        "executor",
+        "database",
+        "core"
+      ]
+    },
+    {
+      "id": "file:backend/app/executor/code_executor.py",
+      "type": "file",
+      "name": "code_executor.py",
+      "filePath": "backend/app/executor/code_executor.py",
+      "summary": "代码执行器，调用 GLM Coding Lite API 生成代码",
+      "tags": [
+        "executor",
+        "ai",
+        "code-generation"
+      ]
+    },
+    {
+      "id": "file:backend/app/executor/external_services.py",
+      "type": "file",
+      "name": "external_services.py",
+      "filePath": "backend/app/executor/external_services.py",
+      "summary": "外部服务封装：Telegram、IP 地理位置 API",
+      "tags": [
+        "executor",
+        "external",
+        "telegram"
+      ]
+    },
+    {
+      "id": "file:backend/app/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "backend/app/config.py",
+      "summary": "应用配置，使用 Pydantic Settings 管理环境变量",
+      "tags": [
+        "config",
+        "pydantic"
+      ]
+    },
+    {
+      "id": "file:frontend/js/app.js",
+      "type": "file",
+      "name": "app.js",
+      "filePath": "frontend/js/app.js",
+      "summary": "前端主应用，任务管理 UI 交互逻辑",
+      "tags": [
+        "frontend",
+        "javascript",
+        "ui"
+      ]
+    },
+    {
+      "id": "file:frontend/index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "frontend/index.html",
+      "summary": "前端 HTML 页面结构",
+      "tags": [
+        "frontend",
+        "html"
+      ]
+    },
+    {
+      "id": "file:frontend/css/styles.css",
+      "type": "file",
+      "name": "styles.css",
+      "filePath": "frontend/css/styles.css",
+      "summary": "前端样式表",
+      "tags": [
+        "frontend",
+        "css"
+      ]
+    },
+    {
+      "id": "file:tests/e2e/test_create_task.spec.ts",
+      "type": "file",
+      "name": "test_create_task.spec.ts",
+      "filePath": "tests/e2e/test_create_task.spec.ts",
+      "summary": "E2E 测试：创建任务流程",
+      "tags": [
+        "test",
+        "e2e",
+        "playwright"
+      ]
+    },
+    {
+      "id": "file:tests/e2e/test_task_list.spec.ts",
+      "type": "file",
+      "name": "test_task_list.spec.ts",
+      "filePath": "tests/e2e/test_task_list.spec.ts",
+      "summary": "E2E 测试：任务列表展示",
+      "tags": [
+        "test",
+        "e2e",
+        "playwright"
+      ]
+    },
+    {
+      "id": "file:.github/workflows/ci-cd.yml",
+      "type": "file",
+      "name": "ci-cd.yml",
+      "filePath": ".github/workflows/ci-cd.yml",
+      "summary": "CI/CD 主流程：测试、构建、部署",
+      "tags": [
+        "ci",
+        "github-actions",
+        "deployment"
+      ]
+    },
+    {
+      "id": "file:.github/workflows/deploy-production.yml",
+      "type": "file",
+      "name": "deploy-production.yml",
+      "filePath": ".github/workflows/deploy-production.yml",
+      "summary": "手动发布到生产环境",
+      "tags": [
+        "ci",
+        "deployment",
+        "production"
+      ]
+    },
+    {
+      "id": "file:.github/workflows/rollback.yml",
+      "type": "file",
+      "name": "rollback.yml",
+      "filePath": ".github/workflows/rollback.yml",
+      "summary": "生产环境回滚流程",
+      "tags": [
+        "ci",
+        "rollback",
+        "production"
+      ]
+    },
+    {
+      "id": "file:backend/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "backend/Dockerfile",
+      "summary": "后端 Docker 镜像构建",
+      "tags": [
+        "docker",
+        "deployment"
+      ]
+    },
+    {
+      "id": "file:docker-compose.yml",
+      "type": "file",
+      "name": "docker-compose.yml",
+      "filePath": "docker-compose.yml",
+      "summary": "本地开发环境 Docker Compose 配置",
+      "tags": [
+        "docker",
+        "development"
+      ]
+    },
+    {
+      "id": "file:render.yaml",
+      "type": "file",
+      "name": "render.yaml",
+      "filePath": "render.yaml",
+      "summary": "Render 平台部署配置",
+      "tags": [
+        "deployment",
+        "render"
+      ]
+    },
+    {
+      "id": "file:vercel.json",
+      "type": "file",
+      "name": "vercel.json",
+      "filePath": "vercel.json",
+      "summary": "Vercel 前端部署配置",
+      "tags": [
+        "deployment",
+        "vercel"
+      ]
+    },
+    {
+      "id": "module:orchestrator",
+      "type": "module",
+      "name": "Orchestrator Layer",
+      "summary": "编排层：理解用户意图、管理上下文、调度任务",
+      "tags": [
+        "architecture",
+        "orchestrator"
+      ]
+    },
+    {
+      "id": "module:executor",
+      "type": "module",
+      "name": "Executor Layer",
+      "summary": "执行层：数据库操作、外部服务调用、代码生成",
+      "tags": [
+        "architecture",
+        "executor"
+      ]
+    },
+    {
+      "id": "module:api",
+      "type": "module",
+      "name": "API Layer",
+      "summary": "API 路由层：HTTP 端点定义",
+      "tags": [
+        "architecture",
+        "api"
+      ]
+    },
+    {
+      "id": "module:models",
+      "type": "module",
+      "name": "Data Models",
+      "summary": "数据模型层：SQLAlchemy ORM 定义",
+      "tags": [
+        "architecture",
+        "models"
+      ]
+    },
+    {
+      "id": "module:frontend",
+      "type": "module",
+      "name": "Frontend",
+      "summary": "前端应用：HTML/CSS/JavaScript 单页应用",
+      "tags": [
+        "architecture",
+        "frontend"
+      ]
+    },
+    {
+      "id": "module:tests",
+      "type": "module",
+      "name": "Tests",
+      "summary": "测试套件：单元测试、集成测试、E2E 测试",
+      "tags": [
+        "architecture",
+        "tests"
+      ]
+    },
+    {
+      "id": "module:ci-cd",
+      "type": "module",
+      "name": "CI/CD Pipeline",
+      "summary": "自动化流程：测试、构建、部署、回滚",
+      "tags": [
+        "architecture",
+        "ci",
+        "deployment"
+      ]
+    },
+    {
+      "id": "concept:dual-layer",
+      "type": "concept",
+      "name": "Dual-Layer Architecture",
+      "summary": "双层架构设计：编排层处理业务逻辑，执行层处理技术实现",
+      "tags": [
+        "concept",
+        "architecture",
+        "design-pattern"
+      ]
+    },
+    {
+      "id": "concept:smart-classification",
+      "type": "concept",
+      "name": "Smart Classification",
+      "summary": "智能分类：根据 IP/地理位置自动切换工作/生活/教育模式",
+      "tags": [
+        "concept",
+        "classification",
+        "context-aware"
+      ]
+    },
+    {
+      "id": "concept:reminder-system",
+      "type": "concept",
+      "name": "Reminder System",
+      "summary": "双重提醒系统：基于时间和地点的智能提醒",
+      "tags": [
+        "concept",
+        "reminder",
+        "scheduler"
+      ]
+    },
+    {
+      "id": "endpoint:/api/tasks",
+      "type": "endpoint",
+      "name": "GET /api/tasks",
+      "summary": "获取任务列表，支持按分类和状态筛选",
+      "tags": [
+        "api",
+        "endpoint",
+        "read"
+      ]
+    },
+    {
+      "id": "endpoint:/api/tasks-post",
+      "type": "endpoint",
+      "name": "POST /api/tasks",
+      "summary": "创建新任务，自动分类并安排提醒",
+      "tags": [
+        "api",
+        "endpoint",
+        "create"
+      ]
+    },
+    {
+      "id": "endpoint:/api/tasks-id-complete",
+      "type": "endpoint",
+      "name": "POST /api/tasks/{id}/complete",
+      "summary": "完成任务，检查子任务状态",
+      "tags": [
+        "api",
+        "endpoint",
+        "update"
+      ]
+    },
+    {
+      "id": "endpoint:/api/tasks-id-split",
+      "type": "endpoint",
+      "name": "POST /api/tasks/{id}/split",
+      "summary": "拆解任务为子任务",
+      "tags": [
+        "api",
+        "endpoint",
+        "create"
+      ]
+    },
+    {
+      "id": "endpoint:/api/mode",
+      "type": "endpoint",
+      "name": "POST /api/mode",
+      "summary": "设置分类模式（自动/手动）",
+      "tags": [
+        "api",
+        "endpoint",
+        "config"
+      ]
+    },
+    {
+      "id": "table:tasks",
+      "type": "table",
+      "name": "tasks",
+      "summary": "任务数据表",
+      "tags": [
+        "database",
+        "table"
+      ]
+    },
+    {
+      "id": "table:ip_mappings",
+      "type": "table",
+      "name": "ip_mappings",
+      "summary": "IP 分类映射表",
+      "tags": [
+        "database",
+        "table"
+      ]
+    },
+    {
+      "id": "table:task_locations",
+      "type": "table",
+      "name": "task_locations",
+      "summary": "任务位置记录表",
+      "tags": [
+        "database",
+        "table"
+      ]
+    },
+    {
+      "id": "service:telegram",
+      "type": "service",
+      "name": "Telegram Bot",
+      "summary": "Telegram 消息推送服务",
+      "tags": [
+        "external",
+        "notification"
+      ]
+    },
+    {
+      "id": "service:ip-api",
+      "type": "service",
+      "name": "IP Geolocation API",
+      "summary": "IP 地理位置查询服务",
+      "tags": [
+        "external",
+        "geolocation"
+      ]
+    },
+    {
+      "id": "service:glm-coding",
+      "type": "service",
+      "name": "GLM Coding Lite API",
+      "summary": "AI 代码生成服务",
+      "tags": [
+        "external",
+        "ai",
+        "code-generation"
+      ]
+    },
+    {
+      "id": "service:render",
+      "type": "service",
+      "name": "Render",
+      "summary": "后端托管平台",
+      "tags": [
+        "deployment",
+        "hosting"
+      ]
+    },
+    {
+      "id": "service:vercel",
+      "type": "service",
+      "name": "Vercel",
+      "summary": "前端托管平台",
+      "tags": [
+        "deployment",
+        "hosting"
+      ]
+    },
+    {
+      "id": "pipeline:ci-cd",
+      "type": "pipeline",
+      "name": "CI/CD Pipeline",
+      "summary": "完整自动化流程：代码提交 → 测试 → Staging → 手动发布 → 生产",
+      "tags": [
+        "pipeline",
+        "automation"
+      ]
+    },
+    {
+      "id": "pipeline:rollback",
+      "type": "pipeline",
+      "name": "Rollback Pipeline",
+      "summary": "生产环境回滚流程",
+      "tags": [
+        "pipeline",
+        "rollback",
+        "safety"
+      ]
+    },
+    {
+      "id": "file:WORKFLOW.md",
+      "type": "file",
+      "name": "WORKFLOW.md",
+      "filePath": "WORKFLOW.md",
+      "summary": "项目标准 GitHub 工作流程定义",
+      "tags": [
+        "docs",
+        "workflow",
+        "process"
+      ]
+    },
+    {
+      "id": "concept:github-workflow",
+      "type": "concept",
+      "name": "Standard GitHub Workflow",
+      "summary": "标准 GitHub 工作流：本地开发 - PR 审查 - 合并 - 手动部署",
+      "tags": [
+        "concept",
+        "workflow",
+        "git"
+      ]
+    },
+    {
+      "id": "concept:branch-protection",
+      "type": "concept",
+      "name": "Branch Protection",
+      "summary": "master 分支保护：需要 PR + 1 人审查批准",
+      "tags": [
+        "concept",
+        "git",
+        "protection"
+      ]
+    },
+    {
+      "id": "concept:local-testing",
+      "type": "concept",
+      "name": "Local Testing First",
+      "summary": "本地先测试：pytest + playwright，测试通过后才提 PR",
+      "tags": [
+        "concept",
+        "testing"
+      ]
+    },
+    {
+      "id": "concept:manual-deploy",
+      "type": "concept",
+      "name": "Manual Production Deploy",
+      "summary": "生产环境手动部署：合并后手动触发，支持回滚",
+      "tags": [
+        "concept",
+        "deployment"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/app/main.py",
+      "target": "file:backend/app/api/tasks.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/main.py",
+      "target": "file:backend/app/api/demo.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/main.py",
+      "target": "file:backend/app/orchestrator/context_manager.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/main.py",
+      "target": "file:backend/app/orchestrator/reminder_scheduler.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/api/tasks.py",
+      "target": "file:backend/app/orchestrator/task_orchestrator.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/api/tasks.py",
+      "target": "file:backend/app/models/task.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/orchestrator/task_orchestrator.py",
+      "target": "file:backend/app/executor/task_executor.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/orchestrator/task_orchestrator.py",
+      "target": "file:backend/app/orchestrator/context_manager.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/orchestrator/context_manager.py",
+      "target": "file:backend/app/executor/task_executor.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/executor/task_executor.py",
+      "target": "file:backend/app/models/task.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/executor/task_executor.py",
+      "target": "file:backend/app/executor/external_services.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/executor/task_executor.py",
+      "target": "file:backend/app/executor/code_executor.py",
+      "type": "imports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "endpoint:/api/tasks",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "endpoint:/api/tasks-post",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "endpoint:/api/tasks-id-complete",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "endpoint:/api/tasks-id-split",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "endpoint:/api/tasks",
+      "target": "file:backend/app/api/tasks.py",
+      "type": "defined_by",
+      "weight": 1.0
+    },
+    {
+      "source": "endpoint:/api/tasks-post",
+      "target": "file:backend/app/api/tasks.py",
+      "type": "defined_by",
+      "weight": 1.0
+    },
+    {
+      "source": "endpoint:/api/tasks-id-complete",
+      "target": "file:backend/app/api/tasks.py",
+      "type": "defined_by",
+      "weight": 1.0
+    },
+    {
+      "source": "endpoint:/api/tasks-id-split",
+      "target": "file:backend/app/api/tasks.py",
+      "type": "defined_by",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/api/tasks.py",
+      "target": "module:api",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/api/demo.py",
+      "target": "module:api",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/orchestrator/task_orchestrator.py",
+      "target": "module:orchestrator",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/orchestrator/context_manager.py",
+      "target": "module:orchestrator",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/orchestrator/reminder_scheduler.py",
+      "target": "module:orchestrator",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/executor/task_executor.py",
+      "target": "module:executor",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/executor/code_executor.py",
+      "target": "module:executor",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/executor/external_services.py",
+      "target": "module:executor",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/app/models/task.py",
+      "target": "module:models",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "module:frontend",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "module:frontend",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/css/styles.css",
+      "target": "module:frontend",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/e2e/test_create_task.spec.ts",
+      "target": "module:tests",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/e2e/test_task_list.spec.ts",
+      "target": "module:tests",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:.github/workflows/ci-cd.yml",
+      "target": "module:ci-cd",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:.github/workflows/deploy-production.yml",
+      "target": "module:ci-cd",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "file:.github/workflows/rollback.yml",
+      "target": "module:ci-cd",
+      "type": "belongs_to",
+      "weight": 1.0
+    },
+    {
+      "source": "module:orchestrator",
+      "target": "concept:dual-layer",
+      "type": "implements",
+      "weight": 0.9
+    },
+    {
+      "source": "module:executor",
+      "target": "concept:dual-layer",
+      "type": "implements",
+      "weight": 0.9
+    },
+    {
+      "source": "module:orchestrator",
+      "target": "module:executor",
+      "type": "depends_on",
+      "weight": 0.7
+    },
+    {
+      "source": "module:api",
+      "target": "module:orchestrator",
+      "type": "depends_on",
+      "weight": 0.7
+    },
+    {
+      "source": "module:executor",
+      "target": "module:models",
+      "type": "depends_on",
+      "weight": 0.7
+    },
+    {
+      "source": "module:frontend",
+      "target": "module:api",
+      "type": "depends_on",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/app/orchestrator/context_manager.py",
+      "target": "concept:smart-classification",
+      "type": "implements",
+      "weight": 0.9
+    },
+    {
+      "source": "file:backend/app/orchestrator/reminder_scheduler.py",
+      "target": "concept:reminder-system",
+      "type": "implements",
+      "weight": 0.9
+    },
+    {
+      "source": "file:backend/app/models/task.py",
+      "target": "table:tasks",
+      "type": "defines_schema",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/models/task.py",
+      "target": "table:ip_mappings",
+      "type": "defines_schema",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/models/task.py",
+      "target": "table:task_locations",
+      "type": "defines_schema",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/app/executor/external_services.py",
+      "target": "service:telegram",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/app/executor/external_services.py",
+      "target": "service:ip-api",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/app/executor/code_executor.py",
+      "target": "service:glm-coding",
+      "type": "calls",
+      "weight": 0.7
+    },
+    {
+      "source": "file:.github/workflows/deploy-production.yml",
+      "target": "service:render",
+      "type": "deploys",
+      "weight": 0.6
+    },
+    {
+      "source": "file:vercel.json",
+      "target": "service:vercel",
+      "type": "configures",
+      "weight": 0.6
+    },
+    {
+      "source": "file:.github/workflows/ci-cd.yml",
+      "target": "pipeline:ci-cd",
+      "type": "defines",
+      "weight": 1.0
+    },
+    {
+      "source": "file:.github/workflows/rollback.yml",
+      "target": "pipeline:rollback",
+      "type": "defines",
+      "weight": 1.0
+    },
+    {
+      "source": "pipeline:ci-cd",
+      "target": "module:tests",
+      "type": "triggers",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/e2e/test_create_task.spec.ts",
+      "target": "module:frontend",
+      "type": "tests",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/e2e/test_task_list.spec.ts",
+      "target": "module:frontend",
+      "type": "tests",
+      "weight": 0.5
+    },
+    {
+      "source": "concept:github-workflow",
+      "target": "concept:branch-protection",
+      "type": "requires",
+      "weight": 0.8
+    },
+    {
+      "source": "concept:github-workflow",
+      "target": "concept:local-testing",
+      "type": "requires",
+      "weight": 0.8
+    },
+    {
+      "source": "concept:github-workflow",
+      "target": "concept:manual-deploy",
+      "type": "requires",
+      "weight": 0.8
+    },
+    {
+      "source": "file:WORKFLOW.md",
+      "target": "concept:github-workflow",
+      "type": "defines",
+      "weight": 1.0
+    },
+    {
+      "source": "file:.github/workflows/ci-cd.yml",
+      "target": "concept:github-workflow",
+      "type": "implements",
+      "weight": 0.9
+    },
+    {
+      "source": "file:.github/workflows/deploy-production.yml",
+      "target": "concept:manual-deploy",
+      "type": "implements",
+      "weight": 0.9
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:frontend",
+      "name": "Frontend Layer",
+      "description": "用户界面层：HTML/CSS/JavaScript 单页应用",
+      "nodeIds": [
+        "module:frontend"
+      ]
+    },
+    {
+      "id": "layer:api",
+      "name": "API Layer",
+      "description": "API 路由层：FastAPI 端点定义",
+      "nodeIds": [
+        "module:api"
+      ]
+    },
+    {
+      "id": "layer:orchestrator",
+      "name": "Orchestrator Layer",
+      "description": "编排层：理解用户意图、管理上下文、调度任务",
+      "nodeIds": [
+        "module:orchestrator",
+        "concept:dual-layer",
+        "concept:smart-classification",
+        "concept:reminder-system"
+      ]
+    },
+    {
+      "id": "layer:executor",
+      "name": "Executor Layer",
+      "description": "执行层：数据库操作、外部服务调用、代码生成",
+      "nodeIds": [
+        "module:executor",
+        "service:telegram",
+        "service:ip-api",
+        "service:glm-coding"
+      ]
+    },
+    {
+      "id": "layer:data",
+      "name": "Data Layer",
+      "description": "数据模型层：SQLAlchemy ORM 定义",
+      "nodeIds": [
+        "module:models",
+        "table:tasks",
+        "table:ip_mappings",
+        "table:task_locations"
+      ]
+    },
+    {
+      "id": "layer:infra",
+      "name": "Infrastructure Layer",
+      "description": "基础设施层：部署配置、CI/CD 流程",
+      "nodeIds": [
+        "module:ci-cd",
+        "service:render",
+        "service:vercel",
+        "pipeline:ci-cd",
+        "pipeline:rollback"
+      ]
+    },
+    {
+      "id": "layer:test",
+      "name": "Test Layer",
+      "description": "测试层：单元测试、集成测试、E2E 测试",
+      "nodeIds": [
+        "module:tests"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "项目概述",
+      "description": "从 README 开始，了解项目的目的和架构设计",
+      "nodeIds": [
+        "file:README.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "架构设计",
+      "description": "理解双层架构设计理念：编排层 + 执行层",
+      "nodeIds": [
+        "file:ARCHITECTURE.md",
+        "concept:dual-layer"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "应用入口",
+      "description": "查看 FastAPI 应用入口，了解生命周期管理",
+      "nodeIds": [
+        "file:backend/app/main.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "API 路由",
+      "description": "探索任务 API 端点定义",
+      "nodeIds": [
+        "file:backend/app/api/tasks.py",
+        "module:api"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "编排层核心",
+      "description": "理解任务编排器如何处理业务逻辑",
+      "nodeIds": [
+        "file:backend/app/orchestrator/task_orchestrator.py",
+        "file:backend/app/orchestrator/context_manager.py",
+        "module:orchestrator"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "执行层核心",
+      "description": "了解执行层如何与数据库和外部服务交互",
+      "nodeIds": [
+        "file:backend/app/executor/task_executor.py",
+        "file:backend/app/executor/external_services.py",
+        "module:executor"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "数据模型",
+      "description": "查看 SQLAlchemy ORM 模型定义",
+      "nodeIds": [
+        "file:backend/app/models/task.py",
+        "module:models"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "前端应用",
+      "description": "探索前端 JavaScript 应用逻辑",
+      "nodeIds": [
+        "file:frontend/js/app.js",
+        "file:frontend/index.html",
+        "module:frontend"
+      ]
+    },
+    {
+      "order": 9,
+      "title": "CI/CD 流程",
+      "description": "了解自动化部署流程",
+      "nodeIds": [
+        "file:.github/workflows/ci-cd.yml",
+        "file:.github/workflows/deploy-production.yml",
+        "module:ci-cd"
+      ]
+    },
+    {
+      "order": 10,
+      "title": "E2E 测试",
+      "description": "查看 Playwright 端到端测试",
+      "nodeIds": [
+        "file:tests/e2e/test_create_task.spec.ts",
+        "module:tests"
+      ]
+    }
+  ]
+}
