@@ -2,7 +2,7 @@ import pytest
 import os
 from fastapi.testclient import TestClient
 from app.main import app
-from app.models import Base, get_db, init_db, drop_all_tables
+from app.models import init_db, drop_all_tables
 
 # 创建测试客户端
 client = TestClient(app)
@@ -44,11 +44,7 @@ def test_create_task():
     """测试创建任务"""
     response = client.post(
         "/api/tasks",
-        json={
-            "title": "测试任务",
-            "description": "这是一个测试任务",
-            "priority": 5
-        }
+        json={"title": "测试任务", "description": "这是一个测试任务", "priority": 5},
     )
     assert response.status_code == 200
     data = response.json()
@@ -63,11 +59,7 @@ def test_get_tasks():
     """测试获取任务列表"""
     # 先创建一个任务
     client.post(
-        "/api/tasks",
-        json={
-            "title": "测试任务",
-            "description": "这是一个测试任务"
-        }
+        "/api/tasks", json={"title": "测试任务", "description": "这是一个测试任务"}
     )
 
     # 获取任务列表
@@ -82,11 +74,7 @@ def test_get_task():
     """测试获取单个任务"""
     # 创建任务
     create_response = client.post(
-        "/api/tasks",
-        json={
-            "title": "测试任务",
-            "description": "这是一个测试任务"
-        }
+        "/api/tasks", json={"title": "测试任务", "description": "这是一个测试任务"}
     )
     task_id = create_response.json()["id"]
 
@@ -102,11 +90,7 @@ def test_complete_task():
     """测试完成任务"""
     # 创建任务
     create_response = client.post(
-        "/api/tasks",
-        json={
-            "title": "测试任务",
-            "description": "这是一个测试任务"
-        }
+        "/api/tasks", json={"title": "测试任务", "description": "这是一个测试任务"}
     )
     task_id = create_response.json()["id"]
 
@@ -121,11 +105,7 @@ def test_delete_task():
     """测试删除任务"""
     # 创建任务
     create_response = client.post(
-        "/api/tasks",
-        json={
-            "title": "测试任务",
-            "description": "这是一个测试任务"
-        }
+        "/api/tasks", json={"title": "测试任务", "description": "这是一个测试任务"}
     )
     task_id = create_response.json()["id"]
 
@@ -142,20 +122,14 @@ def test_split_task():
     """测试拆解任务"""
     # 创建任务
     create_response = client.post(
-        "/api/tasks",
-        json={
-            "title": "父任务",
-            "description": "这是一个父任务"
-        }
+        "/api/tasks", json={"title": "父任务", "description": "这是一个父任务"}
     )
     task_id = create_response.json()["id"]
 
     # 拆解任务
     response = client.post(
         f"/api/tasks/{task_id}/split",
-        json={
-            "subtasks": ["子任务1", "子任务2", "子任务3"]
-        }
+        json={"subtasks": ["子任务1", "子任务2", "子任务3"]},
     )
     assert response.status_code == 200
     data = response.json()
@@ -191,13 +165,7 @@ def test_get_mode():
 
 def test_set_manual_mode():
     """测试设置手动模式"""
-    response = client.post(
-        "/api/mode",
-        json={
-            "mode": "manual",
-            "category": "work"
-        }
-    )
+    response = client.post("/api/mode", json={"mode": "manual", "category": "work"})
     assert response.status_code == 200
 
     # 验证模式已设置
@@ -222,11 +190,7 @@ def test_complete_task_with_subtasks():
     """测试完成任务时检查子任务"""
     # 创建父任务
     create_response = client.post(
-        "/api/tasks",
-        json={
-            "title": "父任务",
-            "subtasks": ["子任务1", "子任务2"]
-        }
+        "/api/tasks", json={"title": "父任务", "subtasks": ["子任务1", "子任务2"]}
     )
     task_id = create_response.json()["id"]
 

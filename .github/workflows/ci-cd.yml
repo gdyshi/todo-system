@@ -9,69 +9,159 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  deployments: write
 
 jobs:
-  # 主流程测试
-  test:
-    name: 运行测试
+  lint:
+    name: Code Quality Check
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 设置 Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: 安装依赖
+      - name: Install dependencies
+        run: |
+          pip install black flake8 mypy
+          pip install -r requirements.txt
+
+      - name: Black check
+        run: black --check --diff backend/
+
+      - name: Flake8 check
+        run: flake8 backend/ --max-line-length=100 --ignore=E501,W503
+
+      - name: MyPy check (non-blocking)
+        run: mypy backend/ --ignore-missing-imports --no-error-summary || true
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
 
-      - name: 运行所有测试
+      - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           cd backend
           pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
 
-      - name: 上传覆盖率报告
+      - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
           file: ./backend/coverage.xml
           fail_ci_if_error: false
 
-  # 部署前端
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: [lint, test]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      preview-url: ${{ steps.vercel.outputs.preview-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        id: vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-light:
+    name: Lightweight E2E Tests (Optional)
+    needs: deploy-preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run critical path tests
+        env:
+          FRONTEND_URL: ${{ needs.deploy-preview.outputs.preview-url }}
+          API_BASE_URL: https://todo-system-msvx.onrender.com/api
+        run: npx playwright test tests/e2e/test-create-task.spec.ts --reporter=list || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy-frontend:
-    needs: test
+    needs: [lint, test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     permissions:
       contents: write
     steps:
-      - name: 检出代码
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend
-
-  # 通知
-  notify:
-    needs: [test, deploy-frontend]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: 成功通知
-        if: success()
-        run: |
-          echo "✅ 流程执行成功！"
-
-      - name: 失败通知
-        if: failure()
-        run: |
-          echo "❌ 流程执行失败，请检查日志"

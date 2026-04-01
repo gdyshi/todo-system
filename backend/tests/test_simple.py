@@ -1,14 +1,16 @@
 """简单的 API 测试 - 不依赖复杂的功能"""
+
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.models import Base, get_db
+from app.models import Base
 
 # 测试数据库（使用内存数据库）
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -24,14 +26,14 @@ def override_get_db():
 @pytest.fixture
 def client():
     from fastapi.testclient import TestClient
-    
+
     # 创建表
     Base.metadata.create_all(bind=engine)
-    
+
     # 使用 TestClient
     with TestClient(app) as c:
         yield c
-    
+
     # 清理表
     Base.metadata.drop_all(bind=engine)
 
