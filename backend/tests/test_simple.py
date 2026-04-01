@@ -1,11 +1,10 @@
 """简单的 API 测试 - 不依赖复杂的功能"""
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.models import Base, get_db
+from app.models import Base
 
 # 测试数据库（使用内存数据库）
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

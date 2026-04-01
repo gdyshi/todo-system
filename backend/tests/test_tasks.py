@@ -2,7 +2,7 @@ import pytest
 import os
 from fastapi.testclient import TestClient
 from app.main import app
-from app.models import Base, get_db, init_db, drop_all_tables
+from app.models import init_db, drop_all_tables
 
 # 创建测试客户端
 client = TestClient(app)
