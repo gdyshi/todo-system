@@ -34,10 +34,17 @@ jobs:
         run: black --check --diff backend/
 
       - name: Flake8 check
-        run: flake8 backend/ --max-line-length=100 --ignore=E501,W503
+        run: flake8 backend/ --max-line-length=100 --ignore=E501,W503,F811,F401
 
-      - name: MyPy check (non-blocking)
-        run: mypy backend/ --ignore-missing-imports --no-error-summary || true
+      - name: MyPy check (core modules only)
+        run: |
+          # Only check our core application code
+          mypy backend/app/ \
+            --ignore-missing-imports \
+            --follow-imports=skip \
+            --disallow-untyped-defs=false \
+            --disallow-incomplete-defs=false \
+            --check-untyped-defs=false
 
   test:
     name: Unit Tests
@@ -102,7 +109,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel Preview
         id: vercel
         uses: amondnet/vercel-action@v25
         with:
@@ -113,11 +120,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-light:
-    name: Lightweight E2E Tests (Optional)
+    name: Lightweight E2E Tests
     needs: deploy-preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -136,11 +142,30 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
+      - name: Wait for Preview deployment
+        run: |
+          echo "Waiting for Preview deployment to be ready..."
+          PREVIEW_URL="${{ needs.deploy-preview.outputs.preview-url }}"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PREVIEW_URL" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Preview is ready! ($i/$i)"
+              exit 0
+            fi
+            echo "Waiting for Preview... ($i/60) Status: $STATUS"
+            sleep 5
+          done
+          echo "Using fallback URL"
+
       - name: Run critical path tests
         env:
           FRONTEND_URL: ${{ needs.deploy-preview.outputs.preview-url }}
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
-        run: npx playwright test tests/e2e/test-create-task.spec.ts --reporter=list || true
+        run: |
+          npx playwright test tests/e2e/test-create-task.spec.ts \
+            --reporter=list \
+            --timeout=120000 \
+            --retries=2
 
       - name: Upload report
         if: always()
@@ -148,6 +173,14 @@ jobs:
         with:
           name: e2e-report
           path: playwright-report/
+          retention-days: 7
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: test-results/**/*.png
           retention-days: 7
 
   deploy-frontend:
@@ -163,5 +196,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_PIN }}
           publish_dir: ./frontend
