@@ -38,13 +38,11 @@ jobs:
 
       - name: MyPy check (core modules only)
         run: |
-          # Only check our core application code
+          # Only check our core application code with relaxed settings
           mypy backend/app/ \
             --ignore-missing-imports \
             --follow-imports=skip \
-            --disallow-untyped-defs=false \
-            --disallow-incomplete-defs=false \
-            --check-untyped-defs=false
+            --disallow-any-generic=false
 
   test:
     name: Unit Tests
