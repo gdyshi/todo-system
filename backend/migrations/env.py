@@ -22,7 +22,7 @@ target_metadata = None
 
 def get_url():
     """Get database URL from environment or fallback to config file."""
-    return os.environ.get('DATABASE_URL') or config.get_main_option("sqlalchemy.url")
+    return os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
 
 
 def run_migrations_offline() -> None:
