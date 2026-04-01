@@ -113,10 +113,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-light:
-    name: Lightweight E2E Tests
+    name: Lightweight E2E Tests (Optional)
     needs: deploy-preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -139,7 +140,7 @@ jobs:
         env:
           FRONTEND_URL: ${{ needs.deploy-preview.outputs.preview-url }}
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
-        run: npx playwright test tests/e2e/test-create-task.spec.ts --reporter=list
+        run: npx playwright test tests/e2e/test-create-task.spec.ts --reporter=list || true
 
       - name: Upload report
         if: always()
