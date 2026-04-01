@@ -36,13 +36,8 @@ jobs:
       - name: Flake8 check
         run: flake8 backend/ --max-line-length=100 --ignore=E501,W503,F811,F401
 
-      - name: MyPy check (core modules only)
-        run: |
-          # Only check our core application code with relaxed settings
-          mypy backend/app/ \
-            --ignore-missing-imports \
-            --follow-imports=skip \
-            --disallow-any-generic=false
+      - name: MyPy check
+        run: mypy backend/app/
 
   test:
     name: Unit Tests
