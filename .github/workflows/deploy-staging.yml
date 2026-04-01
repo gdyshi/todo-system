@@ -10,6 +10,7 @@ permissions:
   deployments: write
 
 jobs:
+  # ==================== 部署后端到 Staging ====================
   deploy-backend-staging:
     name: 部署后端到 Staging
     runs-on: ubuntu-latest
@@ -19,14 +20,36 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 部署到 Render Staging
+      - name: 触发 Render Staging 部署
         run: |
+          echo "🚀 触发 Staging 后端部署..."
           curl -X POST ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }} \
-            -H "Content-Type: application/json"
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}'
 
-      - name: 等待部署
-        run: sleep 60
+      - name: 等待后端部署
+        run: |
+          echo "⏳ 等待后端部署完成..."
+          sleep 90
 
+      - name: 验证后端健康
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://todo-system-msvx.onrender.com/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ 后端健康检查通过"
+              break
+            fi
+            echo "⏳ 等待后端就绪... ($i/30)"
+            sleep 3
+          done
+          
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ 后端健康检查失败"
+            exit 1
+          fi
+
+  # ==================== 部署前端到 Staging ====================
   deploy-frontend-staging:
     name: 部署前端到 Staging
     runs-on: ubuntu-latest
@@ -34,10 +57,138 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 部署到 Vercel
+      - name: 部署到 Vercel Staging
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: --prod
+
+  # ==================== 完整 E2E 测试 ====================
+  e2e-full:
+    name: 完整 E2E 测试
+    needs: [deploy-backend-staging, deploy-frontend-staging]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装 pnpm
+        run: npm install -g pnpm
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 安装 Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: 运行完整 E2E 测试
+        env:
+          FRONTEND_URL: https://todo-system-psi.vercel.app
+          API_BASE_URL: https://todo-system-msvx.onrender.com/api
+        run: |
+          echo "🧪 运行完整 E2E 测试套件..."
+          npx playwright test --reporter=html
+
+      - name: 上传测试报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-full-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: 上传测试截图
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-full-screenshots
+          path: test-results/**/*.png
+          retention-days: 14
+
+  # ==================== 性能测试 ====================
+  performance:
+    name: 性能基准测试
+    needs: e2e-full
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 运行 Lighthouse CI
+        uses: foo-software/lighthouse-check-action@master
+        with:
+          urls: https://todo-system-psi.vercel.app
+          budgetPath: .lighthouseci.json
+
+  # ==================== 部署完成通知 ====================
+  notify:
+    name: 部署完成通知
+    needs: [deploy-backend-staging, deploy-frontend-staging, e2e-full]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 生成报告
+        run: |
+          echo "==================================="
+          echo "Staging 部署报告"
+          echo "==================================="
+          echo "后端状态: ${{ needs.deploy-backend-staging.result }}"
+          echo "前端状态: ${{ needs.deploy-frontend-staging.result }}"
+          echo "E2E测试: ${{ needs.e2e-full.result }}"
+          echo "触发人: ${{ github.actor }}"
+          echo "分支: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "时间: $(date)"
+          echo "==================================="
+          
+          if [ "${{ needs.e2e-full.result }}" != "success" ]; then
+            echo "⚠️ E2E 测试失败，请检查测试报告"
+            echo "📥 下载测试报告查看详情"
+          fi
+
+  # ==================== 失败时创建 Issue ====================
+  create-issue-on-failure:
+    name: 创建失败 Issue
+    needs: [e2e-full]
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 创建 Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔴 Staging E2E 测试失败 - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 自动化测试失败报告
+            
+            **分支**: ${{ github.ref }}
+            **Commit**: ${{ github.sha }}
+            **触发人**: ${{ github.actor }}
+            
+            ### 检查项
+            - 查看 [Actions 日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - 下载测试报告 Artifacts
+            - 修复后重新运行测试
+            
+            ### 相关链接
+            - [Staging 环境](https://todo-system-psi.vercel.app)
+            - [后端 API](https://todo-system-msvx.onrender.com/health)
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'automated', 'staging']
+            });
