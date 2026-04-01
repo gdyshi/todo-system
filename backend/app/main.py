@@ -14,7 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 全局上下文管理器（应用级别）
-_global_context_manager: ContextManager = None
+_global_context_manager: ContextManager | None = None
 _global_scheduler = None
 
 

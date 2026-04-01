@@ -158,7 +158,7 @@ class ReminderScheduler:
 
         # 发送提醒
         await self.executor.send_reminder(
-            task=task, type="time", trigger_time=reminder_time
+            task=task, reminder_type="time", trigger_time=reminder_time
         )
 
         logger.info(f"触发时间提醒: task_id={task_id}")

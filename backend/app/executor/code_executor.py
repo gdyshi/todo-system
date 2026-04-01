@@ -259,6 +259,7 @@ class CodeExecutor:
     async def generate_api_endpoint(
         self,
         endpoint_description: str,
+        context: Optional[str] = None,
         method: str = "GET",
         input_schema: Optional[Dict] = None,
         output_schema: Optional[Dict] = None,

@@ -121,7 +121,7 @@ class TaskOrchestrator:
         logger.info(f"拆解任务成功: {task_id}, 子任务数: {len(subtask_objs)}")
         return subtask_objs
 
-    async def complete_task(self, task_id: int) -> Task:
+    async def complete_task(self, task_id: int) -> Task | None:
         """
         完成任务
 
@@ -247,7 +247,7 @@ class TaskOrchestrator:
         if not result["success"]:
             logger.warning("执行层首次调用失败，尝试调整 prompt")
             adjusted_prompt = self._adjust_prompt_on_failure(
-                prompt, result.get("error")
+                prompt, result.get("error") or ""
             )
             result = await self.executor.execute_code_generation(
                 task_description=adjusted_prompt, task_type=task_type, context=context

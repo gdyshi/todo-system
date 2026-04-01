@@ -127,6 +127,8 @@ async def complete_task(
     """完成任务"""
     try:
         task = await orchestrator.complete_task(task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
         return task.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
