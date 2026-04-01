@@ -37,10 +37,7 @@ jobs:
         run: flake8 backend/ --max-line-length=100 --ignore=E501,W503,F811,F401
 
       - name: MyPy check
-        run: |
-          echo "Running MyPy type checking..."
-          mypy backend/app/ --no-error-summary || echo "MyPy found issues (informational only)"
-          echo "MyPy check completed"
+        run: mypy backend/app/
 
   test:
     name: Unit Tests

@@ -143,7 +143,7 @@ class TaskExecutor:
         return None
 
     async def record_task_location(
-        self, task_id: int, ip: str, location: Dict[str, Any], category: str
+        self, task_id: int, ip: str, location: Dict[str, Any] | None, category: str
     ):
         """记录任务位置"""
         task_location = TaskLocation(

@@ -27,7 +27,7 @@ class ContextManager:
     def __init__(self, executor: TaskExecutor):
         self.executor = executor
         self.current_mode = "auto"  # auto | manual
-        self.cache = {}  # 缓存最近的检测结果
+        self.cache: dict = {}  # 缓存最近的检测结果
 
     async def get_current_context(self, client_ip: str) -> Context:
         """
@@ -84,7 +84,7 @@ class ContextManager:
         return getattr(self, "_manual_category", None)
 
     async def learn_mapping(
-        self, task_id: int, ip: str, location: Dict[str, Any], category: str
+        self, task_id: int, ip: str, location: Dict[str, Any] | None, category: str
     ):
         """
         自动学习IP/位置映射
