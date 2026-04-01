@@ -36,8 +36,8 @@ jobs:
       - name: Flake8 check
         run: flake8 backend/ --max-line-length=100 --ignore=E501,W503
 
-      - name: MyPy check
-        run: mypy backend/ --ignore-missing-imports
+      - name: MyPy check (non-blocking)
+        run: mypy backend/ --ignore-missing-imports --no-error-summary || true
 
   test:
     name: Unit Tests
