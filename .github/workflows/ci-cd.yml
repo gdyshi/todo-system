@@ -139,7 +139,7 @@ jobs:
         env:
           FRONTEND_URL: ${{ needs.deploy-preview.outputs.preview-url }}
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
-        run: npx playwright test tests/e2e/test_create_task.spec.ts --reporter=list
+        run: npx playwright test tests/e2e/test-create-task.spec.ts --reporter=list
 
       - name: Upload report
         if: always()
