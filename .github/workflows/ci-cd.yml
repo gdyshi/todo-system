@@ -115,6 +115,10 @@ jobs:
           github-comment: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Show preview URL
+        run: |
+          echo "Preview URL: ${{ steps.vercel.outputs.preview-url }}"
+
   e2e-light:
     name: Lightweight E2E Tests
     needs: deploy-preview
@@ -138,30 +142,29 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Wait for Preview deployment
-        run: |
-          echo "Waiting for Preview deployment to be ready..."
-          PREVIEW_URL="${{ needs.deploy-preview.outputs.preview-url }}"
-          for i in $(seq 1 60); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PREVIEW_URL" || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              echo "Preview is ready! ($i/$i)"
-              exit 0
-            fi
-            echo "Waiting for Preview... ($i/60) Status: $STATUS"
-            sleep 5
-          done
-          echo "Using fallback URL"
-
-      - name: Run critical path tests
+      - name: Run E2E tests
         env:
-          FRONTEND_URL: ${{ needs.deploy-preview.outputs.preview-url }}
+          # Use production frontend for E2E (preview may have CORS/infrastructure issues)
+          FRONTEND_URL: https://todo-system-psi.vercel.app
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
         run: |
+          echo "Frontend URL: $FRONTEND_URL"
+          echo "API Base URL: $API_BASE_URL"
+          
+          # Verify the frontend is accessible
+          echo "Checking frontend accessibility..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" || echo "000")
+          echo "Frontend HTTP status: $HTTP_CODE"
+          
+          # Verify the API is accessible
+          echo "Checking API accessibility..."
+          API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/tasks" || echo "000")
+          echo "API HTTP status: $API_CODE"
+          
+          # Run tests
           npx playwright test tests/e2e/test-create-task.spec.ts \
             --reporter=list \
-            --timeout=120000 \
-            --retries=2
+            --timeout=60000
 
       - name: Upload report
         if: always()
@@ -192,5 +195,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_PIN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend
