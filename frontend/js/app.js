@@ -10,7 +10,8 @@ const API_BASE_URL = apiOverride
 
 // 应用状态
 let currentFilter = 'all';
-let currentStatuses = ['pending', 'in_progress', 'completed'];
+let currentStatuses = ['in_progress', 'pending']; // 默认不显示已完成
+let showCompleted = false; // 已完成任务的显示状态
 let tasks = [];
 
 // 页面加载完成后初始化
@@ -18,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     loadStats();
     loadModeInfo();
-    loadIPMappings();
     setupEventListeners();
 });
 
@@ -44,6 +44,30 @@ function setupEventListeners() {
             renderTasks();
         });
     });
+
+    // 已完成任务的显示/隐藏按钮
+    const completedCheckbox = document.getElementById('completed-filter');
+    const toggleBtn = document.getElementById('toggle-completed');
+    
+    // 默认隐藏已完成任务
+    completedCheckbox.checked = false;
+    toggleBtn.style.display = 'inline-block';
+    toggleBtn.textContent = '显示已完成';
+    
+    toggleBtn.addEventListener('click', () => {
+        showCompleted = !showCompleted;
+        completedCheckbox.checked = showCompleted;
+        
+        if (showCompleted) {
+            currentStatuses = ['in_progress', 'pending', 'completed'];
+            toggleBtn.textContent = '隐藏已完成';
+        } else {
+            currentStatuses = ['in_progress', 'pending'];
+            toggleBtn.textContent = '显示已完成';
+        }
+        
+        renderTasks();
+    });
 }
 
 // 加载任务列表
@@ -67,6 +91,22 @@ function renderTasks() {
         const statusMatch = currentStatuses.includes(task.status);
         const categoryMatch = currentFilter === 'all' || task.category === currentFilter;
         return statusMatch && categoryMatch;
+    });
+
+    // 按状态排序：进行中 → 待处理 → 已完成
+    const statusOrder = {
+        'in_progress': 0,
+        'pending': 1,
+        'completed': 2
+    };
+    
+    filteredTasks.sort((a, b) => {
+        // 先按状态排序
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        
+        // 同状态按优先级排序（高优先级在前）
+        return b.priority - a.priority;
     });
 
     // 更新计数
@@ -100,6 +140,9 @@ function renderTasks() {
             promptSplitTask(taskId);
         });
     });
+
+    // 更新状态栏中的简要统计
+    updateStatusBar();
 }
 
 // 创建任务HTML
@@ -129,7 +172,7 @@ function createTaskHTML(task) {
         : '';
 
     return `
-        <div class="task-item" data-task-id="${task.id}">
+        <div class="task-item ${task.status === 'completed' ? 'completed' : ''}" data-task-id="${task.id}">
             <div class="task-header">
                 <h3 class="task-title">${task.title}</h3>
                 <div class="task-meta">
@@ -323,36 +366,26 @@ async function loadStats() {
     try {
         const response = await fetch(`${API_BASE_URL}/stats`);
         const stats = await response.json();
-        renderStats(stats);
+        updateStatusBar(stats);
     } catch (error) {
         console.error('加载统计失败:', error);
     }
 }
 
-// 渲染统计信息
-function renderStats(stats) {
-    const container = document.getElementById('stats-container');
-
-    container.innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value">${stats.total}</div>
-                <div class="stat-label">总任务</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.completed}</div>
-                <div class="stat-label">已完成</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.pending}</div>
-                <div class="stat-label">待处理</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.in_progress}</div>
-                <div class="stat-label">进行中</div>
-            </div>
-        </div>
-    `;
+// 更新状态栏
+function updateStatusBar(stats) {
+    const statsBrief = document.getElementById('stats-brief');
+    
+    if (stats) {
+        const inProgress = stats.in_progress || 0;
+        const pending = stats.pending || 0;
+        const completed = stats.completed || 0;
+        const total = stats.total || 0;
+        
+        statsBrief.textContent = `📊 总计: ${total} | 进行中: ${inProgress} | 待处理: ${pending} | 已完成: ${completed}`;
+    } else {
+        statsBrief.textContent = '加载中...';
+    }
 }
 
 // 加载模式信息
@@ -379,68 +412,6 @@ async function loadModeInfo() {
         `;
     } catch (error) {
         console.error('加载模式信息失败:', error);
-    }
-}
-
-// 加载IP映射
-async function loadIPMappings() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/ip-mappings`);
-        const mappings = await response.json();
-        renderIPMappings(mappings);
-    } catch (error) {
-        console.error('加载IP映射失败:', error);
-    }
-}
-
-// 渲染IP映射
-function renderIPMappings(mappings) {
-    const container = document.getElementById('ip-mappings-container');
-
-    if (mappings.length === 0) {
-        container.innerHTML = '<p class="loading">暂无IP映射规则（系统会自动学习）</p>';
-        return;
-    }
-
-    const categoryLabels = {
-        work: '工作',
-        life: '生活',
-        education: '教育'
-    };
-
-    container.innerHTML = mappings.map(mapping => `
-        <div class="ip-mapping-item">
-            <div>
-                <strong>${mapping.ip_pattern}</strong>
-                <span class="task-badge ${mapping.category}">${categoryLabels[mapping.category]}</span>
-                <small>${mapping.auto ? '自动生成' : '手动设置'}</small>
-            </div>
-            ${!mapping.auto ? `<button class="btn btn-danger" onclick="deleteIPMapping(${mapping.id})">删除</button>` : ''}
-        </div>
-    `).join('');
-}
-
-// 删除IP映射
-async function deleteIPMapping(mappingId) {
-    if (!confirm('确定要删除这个IP映射吗？')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/ip-mappings/${mappingId}`, {
-            method: 'DELETE'
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: '服务器返回未知错误' }));
-            throw new Error(errorData.detail || '删除IP映射失败');
-        }
-
-        await loadIPMappings();
-        showSuccess('IP映射已删除！');
-    } catch (error) {
-        console.error('删除IP映射失败:', error);
-        showError('删除IP映射失败');
     }
 }
 

@@ -14,6 +14,33 @@
         </header>
 
         <main>
+            <!-- 任务列表 -->
+            <section class="task-list">
+                <h2>任务列表 <span id="task-count">(0)</span></h2>
+                
+                <!-- 筛选 -->
+                <div class="filters">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="work">工作</button>
+                        <button class="filter-btn" data-filter="life">生活</button>
+                        <button class="filter-btn" data-filter="education">教育</button>
+                    </div>
+                    <div class="status-filters">
+                        <label><input type="checkbox" class="status-filter" value="in_progress" checked> 进行中</label>
+                        <label><input type="checkbox" class="status-filter" value="pending" checked> 待处理</label>
+                        <label>
+                            <input type="checkbox" class="status-filter" value="completed" id="completed-filter"> 已完成
+                            <button class="toggle-completed-btn" id="toggle-completed" style="display:none;">显示已完成</button>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="tasks-container">
+                    <p class="loading">加载中...</p>
+                </div>
+            </section>
+
             <!-- 添加任务表单 -->
             <section class="task-form">
                 <h2>添加新任务</h2>
@@ -69,47 +96,17 @@
                     <button type="submit" class="btn btn-primary">添加任务</button>
                 </form>
             </section>
-
-            <!-- 筛选 -->
-            <section class="filters">
-                <h3>筛选</h3>
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="all">全部</button>
-                    <button class="filter-btn" data-filter="work">工作</button>
-                    <button class="filter-btn" data-filter="life">生活</button>
-                    <button class="filter-btn" data-filter="education">教育</button>
-                </div>
-                <div class="status-filters">
-                    <label><input type="checkbox" class="status-filter" value="pending" checked> 待处理</label>
-                    <label><input type="checkbox" class="status-filter" value="in_progress" checked> 进行中</label>
-                    <label><input type="checkbox" class="status-filter" value="completed" checked> 已完成</label>
-                </div>
-            </section>
-
-            <!-- 任务列表 -->
-            <section class="task-list">
-                <h2>任务列表 <span id="task-count">(0)</span></h2>
-                <div id="tasks-container">
-                    <p class="loading">加载中...</p>
-                </div>
-            </section>
-
-            <!-- 统计信息 -->
-            <section class="stats">
-                <h3>统计信息</h3>
-                <div id="stats-container">
-                    <p class="loading">加载中...</p>
-                </div>
-            </section>
-
-            <!-- IP映射 -->
-            <section class="ip-mappings">
-                <h3>IP映射规则</h3>
-                <div id="ip-mappings-container">
-                    <p class="loading">加载中...</p>
-                </div>
-            </section>
         </main>
+
+        <!-- 状态栏 -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span id="stats-brief">加载中...</span>
+            </div>
+            <div class="status-right">
+                <span id="current-position">任务管理系统 v1.0</span>
+            </div>
+        </footer>
     </div>
 
     <script src="js/app.js"></script>
