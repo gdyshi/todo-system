@@ -3,9 +3,16 @@ from sqlalchemy.orm import sessionmaker
 from app.models.task import Base, Task, IPMapping, TaskLocation
 import os
 
-# 数据库路径
-DATABASE_PATH = os.getenv("DATABASE_PATH", "database/todo.db")
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+# 数据库路径 - 优先使用 DATABASE_URL 环境变量（支持 PostgreSQL 等外部数据库）
+# Render 部署时可通过环境变量设置，本地开发默认使用 SQLite
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+if DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = DATABASE_URL
+    DATABASE_PATH = None
+else:
+    # Render 持久化磁盘路径为 /data，本地开发使用 database/
+    DATABASE_PATH = os.getenv("DATABASE_PATH", "database/todo.db")
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 # 创建引擎
 engine = create_engine(
