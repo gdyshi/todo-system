@@ -358,29 +358,110 @@ main {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    header {
+        padding: 20px 15px;
+    }
+
+    header h1 {
+        font-size: 1.5em;
+    }
+
+    main {
+        padding: 15px;
+    }
+
     .form-row {
         grid-template-columns: 1fr;
     }
 
     .filter-buttons {
         flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        text-align: center;
+        padding: 10px 12px;
+        font-size: 0.9em;
+    }
+
+    .status-filters {
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .status-filters label {
+        font-size: 0.9em;
     }
 
     .task-header {
         flex-direction: column;
+        gap: 8px;
+    }
+
+    .task-meta {
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     .task-actions {
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .task-actions button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .task-form {
+        padding: 15px;
     }
 
     .status-bar {
         flex-direction: column;
         gap: 10px;
         text-align: center;
+        padding: 12px 15px;
     }
 
     .status-left, .status-right {
         justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .container {
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+    }
+
+    .filter-btn {
+        flex: 1 1 100%;
+        padding: 12px;
+        font-size: 1em;
+    }
+
+    .filters {
+        padding: 15px;
+    }
+
+    .task-item {
+        padding: 15px;
+    }
+
+    .task-description {
+        font-size: 0.95em;
     }
 }
