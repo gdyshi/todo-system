@@ -141,6 +141,13 @@ function renderTasks() {
         });
     });
 
+    container.querySelectorAll('.btn-complete-subtask').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const taskId = parseInt(e.target.dataset.taskId);
+            completeTask(taskId);
+        });
+    });
+
     // 更新状态栏中的简要统计
     updateStatusBar();
 }
@@ -162,10 +169,12 @@ function createTaskHTML(task) {
     const subtasksHTML = task.subtasks && task.subtasks.length > 0
         ? `<div class="subtasks">
             ${task.subtasks.map(st => `
-                <div class="subtask-item">
+                <div class="subtask-item ${st.status === 'completed' ? 'completed' : ''}">
                     <span class="task-badge ${st.category}">${categoryLabels[st.category]}</span>
                     ${st.title}
-                    ${st.status === 'completed' ? '✓' : ''}
+                    ${st.status === 'completed' 
+                        ? '<span class="subtask-status completed">✓ 已完成</span>'
+                        : `<button class="btn btn-sm btn-success btn-complete-subtask" data-task-id="${st.id}">✓ 完成</button>`}
                 </div>
             `).join('')}
            </div>`

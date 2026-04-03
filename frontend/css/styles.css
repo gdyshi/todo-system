@@ -231,6 +231,26 @@ main {
     margin: 5px 0;
     background: #f8f9fa;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtask-item.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.subtask-status.completed {
+    color: #28a745;
+    font-weight: bold;
+    margin-left: auto;
+}
+
+.btn-sm {
+    padding: 2px 10px;
+    font-size: 12px;
+    margin-left: auto;
 }
 
 .loading {
