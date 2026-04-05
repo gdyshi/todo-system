@@ -14,12 +14,9 @@
         </header>
 
         <main>
-            <!-- 任务列表 -->
-            <section class="task-list">
-                <h2>任务列表 <span id="task-count">(0)</span></h2>
-                
-                <!-- 筛选 -->
-                <div class="filters">
+            <!-- 筛选 -->
+            <section class="filters">
+                <div class="filter-row">
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-filter="all">全部</button>
                         <button class="filter-btn" data-filter="work">工作</button>
@@ -29,22 +26,26 @@
                     <div class="status-filters">
                         <label><input type="checkbox" class="status-filter" value="in_progress" checked> 进行中</label>
                         <label><input type="checkbox" class="status-filter" value="pending" checked> 待处理</label>
-                        <label>
-                            <input type="checkbox" class="status-filter" value="completed" id="completed-filter"> 已完成
-                            <button class="toggle-completed-btn" id="toggle-completed" style="display:none;">显示已完成</button>
-                        </label>
+                        <label><input type="checkbox" class="status-filter" value="completed"> 已完成</label>
                     </div>
                 </div>
+            </section>
 
+            <!-- 任务列表 - 放在最上面 -->
+            <section class="task-list">
+                <h2>任务列表 <span id="task-count">(0)</span></h2>
                 <div id="tasks-container">
                     <p class="loading">加载中...</p>
                 </div>
             </section>
 
-            <!-- 添加任务表单 -->
-            <section class="task-form">
-                <h2>添加新任务</h2>
-                <form id="add-task-form">
+            <!-- 添加任务表单 - 放在任务列表下面 -->
+            <section class="task-form collapsed">
+                <div class="form-header" onclick="toggleTaskForm()">
+                    <h2>➕ 添加新任务</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <form id="add-task-form" class="form-content">
                     <div class="form-group">
                         <label for="task-title">任务标题 *</label>
                         <input type="text" id="task-title" required placeholder="输入任务标题...">
@@ -98,13 +99,13 @@
             </section>
         </main>
 
-        <!-- 状态栏 -->
+        <!-- 状态栏 - 最下面 -->
         <footer class="status-bar">
             <div class="status-left">
-                <span id="stats-brief">加载中...</span>
+                <span id="stats-summary">加载中...</span>
             </div>
             <div class="status-right">
-                <span id="current-position">任务管理系统 v1.0</span>
+                <span id="current-position">📋 任务列表</span>
             </div>
         </footer>
     </div>
