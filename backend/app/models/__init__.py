@@ -15,9 +15,12 @@ else:
     SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 # 创建引擎
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}  # SQLite需要
-)
+if DATABASE_URL:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+else:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}  # SQLite需要
+    )
 
 # 创建会话
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
