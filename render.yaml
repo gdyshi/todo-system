@@ -13,9 +13,9 @@ services:
     startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
-      - key: DATABASE_PATH
-        value: /data/todo.db
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
+      - key: DATABASE_URL
+        fromDatabase:
+          name: todo_system
+          property: internalConnectionString
+      - key: PYTHON_VERSION
+        value: "3.11.0"
