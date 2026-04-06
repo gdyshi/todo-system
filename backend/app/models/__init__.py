@@ -29,7 +29,7 @@ def init_db():
     if DATABASE_PATH:
         db_dir = os.path.dirname(DATABASE_PATH)
         if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir, exist_ok=True)
+            os.makedirs(db_dir, exist_ok=True)
     Base.metadata.create_all(bind=engine)
 
 
