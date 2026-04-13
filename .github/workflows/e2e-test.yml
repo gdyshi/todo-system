@@ -1,8 +1,13 @@
 name: E2E Tests + Performance
 
+# WARNING: This workflow runs E2E tests against production API!
+# Only enable this if you have a dedicated test database or accept test data pollution.
+# Consider using a staging environment for automated E2E testing.
+
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 jobs:
   e2e-test:
@@ -52,3 +57,9 @@ jobs:
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
+
+      - name: Cleanup test data
+        if: always()
+        env:
+          API_BASE_URL: https://todo-system-msvx.onrender.com/api
+        run: node tests/e2e/cleanup-test-data.js

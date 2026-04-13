@@ -125,6 +125,8 @@ jobs:
     needs: deploy-preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # WARNING: This runs against production API. Only for PR validation against production.
+    # DO NOT enable this for master/main branch pushes.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -145,27 +147,34 @@ jobs:
 
       - name: Run E2E tests
         env:
-          # Use production frontend for E2E (preview may have CORS/infrastructure issues)
+          # WARNING: Using production API for PR validation only!
+          # This creates test data in production. Consider setting up a staging/test database.
           FRONTEND_URL: https://todo-system-psi.vercel.app
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
         run: |
           echo "Frontend URL: $FRONTEND_URL"
           echo "API Base URL: $API_BASE_URL"
-          
+
           # Verify the frontend is accessible
           echo "Checking frontend accessibility..."
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" || echo "000")
           echo "Frontend HTTP status: $HTTP_CODE"
-          
+
           # Verify the API is accessible
           echo "Checking API accessibility..."
           API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/tasks" || echo "000")
           echo "API HTTP status: $API_CODE"
-          
+
           # Run tests
           npx playwright test tests/e2e/test-create-task.spec.ts \
             --reporter=list \
             --timeout=60000
+
+      - name: Cleanup test data
+        if: always()
+        env:
+          API_BASE_URL: https://todo-system-msvx.onrender.com/api
+        run: node tests/e2e/cleanup-test-data.js
 
       - name: Upload report
         if: always()

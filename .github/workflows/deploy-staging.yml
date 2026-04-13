@@ -1,5 +1,9 @@
 name: Deploy to Staging
 
+# WARNING: This workflow runs E2E tests against the production API!
+# These tests create real data in the production database.
+# Only use this if you accept test data pollution or have a dedicated test database.
+
 on:
   push:
     branches: [master, main]
@@ -82,9 +86,16 @@ jobs:
 
       - name: Run all E2E tests
         env:
+          # WARNING: Using production API - this creates test data in production!
           FRONTEND_URL: https://todo-system-psi.vercel.app
           API_BASE_URL: https://todo-system-msvx.onrender.com/api
         run: npx playwright test --reporter=html
+
+      - name: Cleanup test data
+        if: always()
+        env:
+          API_BASE_URL: https://todo-system-msvx.onrender.com/api
+        run: node tests/e2e/cleanup-test-data.js
 
       - name: Upload report
         if: always()

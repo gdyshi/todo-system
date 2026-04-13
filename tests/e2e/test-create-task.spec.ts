@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// CI 测试使用环境变量，优先使用 preview URL，回退到生产环境
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://todo-system-psi.vercel.app';
-const API_BASE_URL = process.env.API_BASE_URL || 'https://todo-system-msvx.onrender.com/api';
+// E2E tests use environment variables, defaulting to local development server
+// WARNING: Never run E2E tests against production unless you have a dedicated test database!
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api';
 
 test.describe('E2E Tests - 创建任务', () => {
   
