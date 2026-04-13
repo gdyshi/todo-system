@@ -14,6 +14,25 @@ let currentStatuses = ['in_progress', 'pending']; // 默认不显示已完成
 let showCompleted = false; // 已完成任务的显示状态
 let tasks = [];
 
+// 通用重试函数 - 应对 Render 免费版冷启动超时
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 3000) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response;
+        } catch (error) {
+            if (attempt === retries) {
+                throw error;
+            }
+            console.warn(`请求失败，${delay / 1000}秒后重试 (${attempt + 1}/${retries})...`, url);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
@@ -73,12 +92,12 @@ function setupEventListeners() {
 // 加载任务列表
 async function loadTasks() {
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks?category=${currentFilter === 'all' ? '' : currentFilter}`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/tasks?category=${currentFilter === 'all' ? '' : currentFilter}`);
         tasks = await response.json();
         renderTasks();
     } catch (error) {
         console.error('加载任务失败:', error);
-        showError('加载任务失败');
+        showError('后端服务正在启动中，请稍候刷新页面');
     }
 }
 
@@ -373,7 +392,7 @@ async function promptSplitTask(taskId) {
 // 加载统计信息
 async function loadStats() {
     try {
-        const response = await fetch(`${API_BASE_URL}/stats`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/stats`);
         const stats = await response.json();
         updateStatusBar(stats);
     } catch (error) {
@@ -400,7 +419,7 @@ function updateStatusBar(stats) {
 // 加载模式信息
 async function loadModeInfo() {
     try {
-        const response = await fetch(`${API_BASE_URL}/mode`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/mode`);
         const modeInfo = await response.json();
 
         const container = document.getElementById('mode-info');
