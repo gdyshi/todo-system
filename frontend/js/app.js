@@ -249,43 +249,20 @@ function formatDateTime(dateString) {
 async function handleAddTask(e) {
     e.preventDefault();
 
-    const title = document.getElementById('task-title').value.trim();
-    const description = document.getElementById('task-description').value.trim();
-    const categorySelect = document.getElementById('task-category').value;
-    const priority = parseInt(document.getElementById('task-priority').value);
-    const dueTime = document.getElementById('task-due-time').value;
-    const location = document.getElementById('task-location').value.trim();
-    const subtasksText = document.getElementById('task-subtasks').value.trim();
+    const input = document.getElementById('task-input').value.trim();
 
-    if (!title) {
-        showError('请输入任务标题');
+    if (!input) {
+        showError('请输入任务描述');
         return;
     }
 
     const taskData = {
-        title,
-        description,
-        priority,
+        title: input,
+        priority: 0,
     };
 
-    if (categorySelect !== 'auto') {
-        taskData.category = categorySelect;
-    }
-
-    if (dueTime) {
-        taskData.due_time = new Date(dueTime).toISOString();
-    }
-
-    if (location) {
-        taskData.location = location;
-    }
-
-    if (subtasksText) {
-        taskData.subtasks = subtasksText.split('\n').filter(st => st.trim());
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks`, {
+        const response = await fetchWithRetry(`${API_BASE_URL}/tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(taskData)
@@ -296,17 +273,17 @@ async function handleAddTask(e) {
             throw new Error(errorData.detail || '添加任务失败');
         }
 
-        // 清空表单
-        document.getElementById('add-task-form').reset();
+        // 清空输入框
+        document.getElementById('task-input').value = '';
 
         // 重新加载任务
         await loadTasks();
         await loadStats();
 
-        showSuccess('任务添加成功！');
+        showSuccess('任务添加成功！AI 正在生成子任务...');
     } catch (error) {
         console.error('添加任务失败:', error);
-        showError('添加任务失败');
+        showError('添加任务失败: ' + (error.message || '未知错误'));
     }
 }
 

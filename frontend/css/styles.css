@@ -465,3 +465,36 @@ main {
         font-size: 0.95em;
     }
 }
+
+/* Simplified task input */
+.task-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.task-input-group input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.task-input-group input:focus {
+    border-color: #4a90d9;
+}
+
+.task-input-group .btn-add {
+    padding: 12px 24px;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.form-hint {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    color: #888;
+}
