@@ -158,12 +158,15 @@ class TaskExecutor:
 
     async def get_location_statistics(self) -> List[Dict[str, Any]]:
         """获取位置统计"""
+        from sqlalchemy import func
+
         # 统计每个IP/位置的任务分类分布
         stats = (
             self.db.query(
-                TaskLocation.ip, TaskLocation.category, Task.id.label("task_count")
+                TaskLocation.ip,
+                TaskLocation.category,
+                func.count(TaskLocation.id).label("task_count"),
             )
-            .join(Task, TaskLocation.task_id == Task.id)
             .group_by(TaskLocation.ip, TaskLocation.category)
             .all()
         )
