@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
+from app.orchestrator.subtask_generator import generate_subtasks
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
@@ -60,6 +61,10 @@ class TaskOrchestrator:
         else:
             category = self._classify_task(task_info, context)
 
+        # 兜底：确保 category 不为空（数据库 NOT NULL 约束）
+        if not category:
+            category = "life"
+
         # 3. 创建主任务
         task = await self.executor.create_task(
             title=task_info["title"],
@@ -78,6 +83,13 @@ class TaskOrchestrator:
         # 5. 如果需要拆分子任务
         if subtasks:
             for subtask_title in subtasks:
+                await self._create_subtask(task.id, subtask_title, category)
+        else:
+            # 自动生成子任务（AI）
+            auto_subtasks = await generate_subtasks(
+                task_info["title"], description or task_info.get("description")
+            )
+            for subtask_title in auto_subtasks:
                 await self._create_subtask(task.id, subtask_title, category)
 
         # 6. 安排提醒

@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     github_repo: Optional[str] = None
     github_token: Optional[str] = None
 
+    # AI 子任务生成 API 配置（环境变量：MODEL_URL, MODEL_NAME, MODEL_KEY）
+    model_url: Optional[str] = None
+    model_name: Optional[str] = None
+    model_key: Optional[str] = None
+
     # 日志配置
     log_level: str = "INFO"
 
