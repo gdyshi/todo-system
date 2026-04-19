@@ -25,7 +25,9 @@ async def generate_subtasks(title: str, description: Optional[str] = None) -> Li
     model_key = settings.model_key
 
     if not model_url or not model_name or not model_key:
-        logger.info("AI 子任务生成未配置（MODEL_URL/MODEL_NAME/MODEL_KEY），跳过自动生成")
+        logger.info(
+            "AI 子任务生成未配置（MODEL_URL/MODEL_NAME/MODEL_KEY），跳过自动生成"
+        )
         return []
 
     prompt = _build_prompt(title, description)
@@ -47,7 +49,7 @@ async def generate_subtasks(title: str, description: Optional[str] = None) -> Li
                                 "你是一个任务管理助手。用户会给你一个任务描述，"
                                 "你需要将这个任务拆解为 2-5 个具体可执行的子任务。"
                                 "只返回 JSON 数组格式，不要其他内容。"
-                                "示例：[\"子任务1\", \"子任务2\", \"子任务3\"]"
+                                '示例：["子任务1", "子任务2", "子任务3"]'
                             ),
                         },
                         {"role": "user", "content": prompt},
@@ -106,5 +108,9 @@ def _parse_subtasks(content: str) -> List[str]:
             pass
 
     # 最后尝试按行分割
-    lines = [line.strip().lstrip("0123456789.-) ") for line in content.split("\n") if line.strip()]
+    lines = [
+        line.strip().lstrip("0123456789.-) ")
+        for line in content.split("\n")
+        if line.strip()
+    ]
     return lines if lines else []
