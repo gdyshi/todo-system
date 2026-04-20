@@ -19,7 +19,7 @@ class TaskExecutor:
         self.db = db
         # 初始化代码执行器（调用 AI 模型 API）
         self.code_executor = CodeExecutor(
-            api_key=settings.model_key or '', model=settings.model_name
+            api_key=settings.model_key or "", model=settings.model_name
         )
         # 添加 external_services 作为属性
         self.external_services = external_services
