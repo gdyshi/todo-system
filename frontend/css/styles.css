@@ -262,9 +262,13 @@ main {
 /* 表单 */
 .task-form {
     background: #f8f9fa;
-    padding: 25px;
+    padding: 15px 20px;
     border-radius: 8px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+}
+
+.task-form.compact {
+    padding: 12px 15px;
 }
 
 .task-form h2 {
