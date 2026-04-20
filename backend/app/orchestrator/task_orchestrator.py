@@ -3,9 +3,11 @@ from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
 from app.orchestrator.subtask_generator import generate_subtasks
+from app.config import settings
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -171,14 +173,124 @@ class TaskOrchestrator:
 
         编排层职责：
         - 根据上下文判断
-        - 根据任务内容判断
+        - 根据任务内容判断（使用 LLM）
         """
         # 优先使用上下文中的分类
         if context.category:
             return context.category
 
-        # 根据任务内容判断
-        title = task_info["title"].lower()
+        # 使用 LLM 进行语义分类
+        title = task_info["title"]
+        description = task_info.get("description")
+        llm_category = self._classify_task_with_llm(title, description)
+        if llm_category:
+            return llm_category
+
+        # LLM 失败时的兜底：关键词匹配
+        logger.warning("LLM 分类失败，使用关键词兜底")
+        return self._classify_task_fallback(title)
+
+    def _classify_task_with_llm(
+        self, title: str, description: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        使用 LLM 进行语义分类
+
+        Args:
+            title: 任务标题
+            description: 任务描述（可选）
+
+        Returns:
+            分类字符串 (work/life/education)，失败返回 None
+        """
+        model_url = settings.model_url
+        model_name = settings.model_name
+        model_key = settings.model_key
+
+        if not model_url or not model_name or not model_key:
+            logger.info("LLM 分类未配置（MODEL_URL/MODEL_NAME/MODEL_KEY），跳过")
+            return None
+
+        prompt = f"""根据任务标题判断分类，只返回分类词，不要其他内容。
+
+分类选项：
+- work: 工作相关（项目、报告、会议、代码、客户、需求等）
+- life: 生活相关（购物、做饭、运动、娱乐、家务等）
+- education: 学习相关（课程、考试、作业、论文、阅读等）
+
+示例：
+输入：完成项目报告 → 输出：work
+输入：周末去超市买菜 → 输出：life
+输入：准备期末考试 → 输出：education
+
+任务标题：{title}"""
+        if description:
+            prompt += f"\n任务描述：{description}"
+        prompt += "\n\n分类："
+
+        try:
+            import asyncio
+
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(self._call_llm_classify(prompt))
+                return result
+            finally:
+                loop.close()
+        except Exception as e:
+            logger.warning(f"LLM 分类调用失败: {e}")
+            return None
+
+    async def _call_llm_classify(self, prompt: str) -> Optional[str]:
+        """调用 LLM API 进行分类"""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    settings.model_url,
+                    headers={
+                        "Authorization": f"Bearer {settings.model_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.model_name,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "你是一个任务分类助手。根据用户输入的任务判断分类，只返回分类词（work/life/education），不要其他内容。",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 50,
+                    },
+                )
+
+                if response.status_code != 200:
+                    logger.warning(f"LLM API 返回非 200: {response.status_code}")
+                    return None
+
+                data = response.json()
+                content = data["choices"][0]["message"]["content"].strip().lower()
+
+                # 验证返回值是有效分类
+                valid_categories = ["work", "life", "education"]
+                if content in valid_categories:
+                    logger.info(f"LLM 分类成功: {content}")
+                    return content
+                else:
+                    logger.warning(f"LLM 返回无效分类: {content}")
+                    return None
+
+        except Exception as e:
+            logger.warning(f"LLM 分类异常: {e}")
+            return None
+
+    def _classify_task_fallback(self, title: str) -> str:
+        """
+        兜底分类：关键词匹配（LLM 不可用时使用）
+        """
+        title_lower = title.lower()
 
         # 工作相关关键词
         work_keywords = [
@@ -191,8 +303,11 @@ class TaskOrchestrator:
             "功能",
             "客户",
             "需求",
+            "工作",
+            "上班",
+            "职场",
         ]
-        if any(keyword in title for keyword in work_keywords):
+        if any(keyword in title_lower for keyword in work_keywords):
             return "work"
 
         # 教育相关关键词
@@ -205,8 +320,10 @@ class TaskOrchestrator:
             "阅读",
             "研究",
             "笔记",
+            "学校",
+            "培训",
         ]
-        if any(keyword in title for keyword in education_keywords):
+        if any(keyword in title_lower for keyword in education_keywords):
             return "education"
 
         # 默认为生活相关

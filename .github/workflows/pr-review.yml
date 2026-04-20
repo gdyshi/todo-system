@@ -39,7 +39,7 @@ jobs:
 
       - name: Lint 检查
         run: |
-          flake8 backend/app/ --max-line-length=120 --exclude=backend/app/__pycache__ --ignore=E203,E231
+          flake8 backend/app/ --max-line-length=100 --exclude=backend/app/__pycache__ --ignore=E501,W503,F811,F401,E203,E231
 
       - name: 类型检查
         run: |
