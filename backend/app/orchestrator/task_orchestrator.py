@@ -190,7 +190,9 @@ class TaskOrchestrator:
         logger.warning("LLM 分类失败，使用关键词兜底")
         return self._classify_task_fallback(title)
 
-    def _classify_task_with_llm(self, title: str, description: Optional[str] = None) -> Optional[str]:
+    def _classify_task_with_llm(
+        self, title: str, description: Optional[str] = None
+    ) -> Optional[str]:
         """
         使用 LLM 进行语义分类
 
@@ -228,6 +230,7 @@ class TaskOrchestrator:
 
         try:
             import asyncio
+
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
