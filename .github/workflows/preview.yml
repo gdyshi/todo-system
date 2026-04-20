@@ -37,7 +37,7 @@ jobs:
 
       - name: 部署到 Vercel (Preview)
         id: vercel
-        uses: amondnet/vercel-action@v25
+        uses: amondnet/vercel-action@v25.20.4
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -81,7 +81,7 @@ jobs:
     if: github.event.action == 'closed'
     steps:
       - name: 清理 Vercel Preview
-        uses: amondnet/vercel-action@v25
+        uses: amondnet/vercel-action@v25.20.4
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
