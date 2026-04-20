@@ -12,8 +12,19 @@ permissions:
   deployments: write
 
 jobs:
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for hardcoded secrets
+        run: python scripts/secret-scan.py .
+
   lint:
     name: Code Quality Check
+    needs: [secret-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,6 +52,7 @@ jobs:
 
   test:
     name: Unit Tests
+    needs: [secret-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -72,6 +84,7 @@ jobs:
 
   security:
     name: Security Scan
+    needs: [secret-scan]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
