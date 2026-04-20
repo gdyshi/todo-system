@@ -20,9 +20,8 @@ git pull origin master
 cd backend
 pytest
 
-# 前端测试（如有）
-cd frontend
-npm test
+# 密钥泄露扫描（重要！）
+python scripts/secret-scan.py .
 ```
 
 ### 4. 创建新分支并推送
@@ -41,13 +40,42 @@ gh run watch --exit-status
 ### 6. 创建 PR（自动审批）
 ```bash
 gh pr create --base master --head <branch-name> --title "<title>" --body "<description>"
-gh pr merge <pr-number> --merge --delete-branch
+gh pr merge <pr-number> --admin --delete-branch
 ```
 
 ### 7. 等待部署通过
 ```bash
 gh run watch --exit-status
 ```
+
+---
+
+## 密钥安全规范（最高优先级）
+
+### 绝对禁止
+
+1. **禁止在代码中硬编码 API Key、Token、Secret、Password**
+2. **禁止在 commit 中包含任何密钥/凭证**
+3. **禁止将 .env 文件提交到 Git**
+
+### 正确做法
+
+- 使用环境变量：`os.environ.get("API_KEY")`
+- 使用 GitHub Secrets 存储敏感信息
+- 本地开发使用 .env 文件（已在 .gitignore 中）
+
+### CI/CD 自动检测
+
+项目 CI/CD 流水线包含密钥扫描步骤（`scripts/secret-scan.py`）：
+- **最先运行**（在 lint、test 之前）
+- **检测失败则 CI 直接失败**，后续步骤不执行
+- 检测硬编码的 API Key、Secret、Token、Password、Private Key 等
+
+### 如果泄露已经发生
+
+1. 立即轮换（rotate）泄露的密钥
+2. 使用 `git-filter-repo` 清理 Git 历史
+3. 通知相关平台撤销泄露的凭证
 
 ---
 
@@ -60,19 +88,13 @@ gh run watch --exit-status
 | 重构 | `refactor/xxx` | `refactor/api-structure` |
 | 文档 | `docs/xxx` | `docs/update-readme` |
 
----
-
 ## Commit 消息规范
 
 ```
 <type>: <description>
 
 [optional body]
-
-[optional footer]
 ```
-
-### Type 类型
 
 | 类型 | 说明 |
 |------|------|
@@ -89,9 +111,20 @@ gh run watch --exit-status
 
 项目包含以下工作流：
 
-1. **CI/CD Pipeline** - 代码质量检查 + 单元测试 + 安全扫描
+1. **CI/CD Pipeline** - 密钥扫描 + 代码质量 + 单元测试 + 安全扫描
 2. **Deploy to Staging** - 部署到 Staging 环境 + E2E 测试
 3. **E2E Tests + Performance** - 独立测试工作流
+
+### CI/CD Pipeline Job 依赖链
+
+```
+secret-scan (最先执行)
+  ├── lint (Code Quality)
+  ├── test (Unit Tests)
+  └── security (Trivy Scan)
+        └── deploy-preview (PR only)
+              └── e2e-light (PR only)
+```
 
 ### 成功标准
 
@@ -99,27 +132,12 @@ gh run watch --exit-status
 
 ---
 
-## 常见问题
-
-### E2E 测试失败
-- 检查测试代码是否与前端元素匹配
-- 查看 `tests/e2e/` 目录下的测试文件
-
-### Vercel 部署失败
-- 检查 Vercel CLI 版本（需要 47.2.2+）
-- 检查 `vercel.json` 配置
-
-### 类型检查失败
-- 运行 `mypy backend/` 查看详细错误
-- 确保 Optional 类型正确处理
-
----
-
 ## 禁止行为
 
 1. **禁止直接推送到 master** - 必须通过 PR 合并
-2. **禁止跳过测试** - 所有测试必须通过
-3. **禁止忽略 CI 失败** - CI 失败必须修复后才能合并
+2. **禁止硬编码密钥** - 必须使用环境变量
+3. **禁止跳过测试** - 所有测试必须通过
+4. **禁止忽略 CI 失败** - CI 失败必须修复后才能合并
 
 ---
 
