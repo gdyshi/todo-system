@@ -46,55 +46,11 @@
                     <span class="toggle-icon">▼</span>
                 </div>
                 <form id="add-task-form" class="form-content">
-                    <div class="form-group">
-                        <label for="task-title">任务标题 *</label>
-                        <input type="text" id="task-title" required placeholder="输入任务标题...">
+                    <div class="form-group task-input-group">
+                        <input type="text" id="task-input" required placeholder="输入任务描述，AI 将自动拆解子任务..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary btn-add">添加</button>
                     </div>
-
-                    <div class="form-group">
-                        <label for="task-description">任务描述</label>
-                        <textarea id="task-description" rows="3" placeholder="输入任务描述..."></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="task-category">分类</label>
-                            <select id="task-category">
-                                <option value="auto">自动</option>
-                                <option value="work">工作</option>
-                                <option value="life">生活</option>
-                                <option value="education">教育</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="task-priority">优先级</label>
-                            <select id="task-priority">
-                                <option value="0">低</option>
-                                <option value="5">中</option>
-                                <option value="9">高</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="task-due-time">截止时间</label>
-                            <input type="datetime-local" id="task-due-time">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="task-location">地点提醒（JSON格式）</label>
-                            <input type="text" id="task-location" placeholder='{"lat": 31.2304, "lon": 121.4737}'>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="task-subtasks">子任务（每行一个）</label>
-                        <textarea id="task-subtasks" rows="3" placeholder="输入子任务，每行一个..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">添加任务</button>
+                    <p class="form-hint">输入任务描述即可，系统将自动分类并生成子任务</p>
                 </form>
             </section>
         </main>

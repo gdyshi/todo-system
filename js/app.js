@@ -14,6 +14,25 @@ let currentStatuses = ['in_progress', 'pending']; // 默认不显示已完成
 let showCompleted = false; // 已完成任务的显示状态
 let tasks = [];
 
+// 通用重试函数 - 应对 Render 免费版冷启动超时
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 3000) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response;
+        } catch (error) {
+            if (attempt === retries) {
+                throw error;
+            }
+            console.warn(`请求失败，${delay / 1000}秒后重试 (${attempt + 1}/${retries})...`, url);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
@@ -73,12 +92,12 @@ function setupEventListeners() {
 // 加载任务列表
 async function loadTasks() {
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks?category=${currentFilter === 'all' ? '' : currentFilter}`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/tasks?category=${currentFilter === 'all' ? '' : currentFilter}`);
         tasks = await response.json();
         renderTasks();
     } catch (error) {
         console.error('加载任务失败:', error);
-        showError('加载任务失败');
+        showError('后端服务正在启动中，请稍候刷新页面');
     }
 }
 
@@ -230,43 +249,20 @@ function formatDateTime(dateString) {
 async function handleAddTask(e) {
     e.preventDefault();
 
-    const title = document.getElementById('task-title').value.trim();
-    const description = document.getElementById('task-description').value.trim();
-    const categorySelect = document.getElementById('task-category').value;
-    const priority = parseInt(document.getElementById('task-priority').value);
-    const dueTime = document.getElementById('task-due-time').value;
-    const location = document.getElementById('task-location').value.trim();
-    const subtasksText = document.getElementById('task-subtasks').value.trim();
+    const input = document.getElementById('task-input').value.trim();
 
-    if (!title) {
-        showError('请输入任务标题');
+    if (!input) {
+        showError('请输入任务描述');
         return;
     }
 
     const taskData = {
-        title,
-        description,
-        priority,
+        title: input,
+        priority: 0,
     };
 
-    if (categorySelect !== 'auto') {
-        taskData.category = categorySelect;
-    }
-
-    if (dueTime) {
-        taskData.due_time = new Date(dueTime).toISOString();
-    }
-
-    if (location) {
-        taskData.location = location;
-    }
-
-    if (subtasksText) {
-        taskData.subtasks = subtasksText.split('\n').filter(st => st.trim());
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks`, {
+        const response = await fetchWithRetry(`${API_BASE_URL}/tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(taskData)
@@ -277,17 +273,17 @@ async function handleAddTask(e) {
             throw new Error(errorData.detail || '添加任务失败');
         }
 
-        // 清空表单
-        document.getElementById('add-task-form').reset();
+        // 清空输入框
+        document.getElementById('task-input').value = '';
 
         // 重新加载任务
         await loadTasks();
         await loadStats();
 
-        showSuccess('任务添加成功！');
+        showSuccess('任务添加成功！AI 正在生成子任务...');
     } catch (error) {
         console.error('添加任务失败:', error);
-        showError('添加任务失败');
+        showError('添加任务失败: ' + (error.message || '未知错误'));
     }
 }
 
@@ -373,7 +369,7 @@ async function promptSplitTask(taskId) {
 // 加载统计信息
 async function loadStats() {
     try {
-        const response = await fetch(`${API_BASE_URL}/stats`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/stats`);
         const stats = await response.json();
         updateStatusBar(stats);
     } catch (error) {
@@ -400,7 +396,7 @@ function updateStatusBar(stats) {
 // 加载模式信息
 async function loadModeInfo() {
     try {
-        const response = await fetch(`${API_BASE_URL}/mode`);
+        const response = await fetchWithRetry(`${API_BASE_URL}/mode`);
         const modeInfo = await response.json();
 
         const container = document.getElementById('mode-info');
