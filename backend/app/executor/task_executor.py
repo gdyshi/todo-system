@@ -17,9 +17,9 @@ class TaskExecutor:
 
     def __init__(self, db: Session):
         self.db = db
-        # 初始化代码执行器（调用 GLM Coding Lite API）
+        # 初始化代码执行器（调用 AI 模型 API）
         self.code_executor = CodeExecutor(
-            api_key=settings.glm_api_key, model=settings.glm_model
+            api_key=settings.model_key, model=settings.model_name
         )
         # 添加 external_services 作为属性
         self.external_services = external_services

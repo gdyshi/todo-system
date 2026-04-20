@@ -18,11 +18,6 @@ class Settings(BaseSettings):
     database_path: str = "database/todo.db"
     database_url: str = "sqlite:///./database/todo.db"
 
-    # GLM Coding Lite API 配置（双层架构 - 执行层）
-    glm_api_key: str = "357cd9367f801b6df81b655113572404.byyt1f6Wd6AvKXpU"
-    glm_model: str = "glm-4.7"
-    glm_base_url: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-
     # Telegram配置（用于提醒）
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
@@ -35,9 +30,9 @@ class Settings(BaseSettings):
     github_repo: Optional[str] = None
     github_token: Optional[str] = None
 
-    # AI 子任务生成 API 配置（环境变量：MODEL_URL, MODEL_NAME, MODEL_KEY）
-    model_url: Optional[str] = None
-    model_name: Optional[str] = None
+    # AI 模型 API 配置（环境变量：MODEL_URL, MODEL_NAME, MODEL_KEY）
+    model_url: str = "https://open.ospreyai.cn/v1/chat/completions"
+    model_name: str = "minimax-m2.5-highspeed"
     model_key: Optional[str] = None
 
     # 日志配置
