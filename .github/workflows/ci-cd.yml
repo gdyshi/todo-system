@@ -34,7 +34,7 @@ jobs:
         run: black --check --diff backend/
 
       - name: Flake8 check
-        run: flake8 backend/ --max-line-length=100 --ignore=E501,W503,F811,F401
+        run: flake8 backend/ --max-line-length=100 --ignore=E501,W503,F811,F401,E203,E231
 
       - name: MyPy check
         run: mypy backend/app/
