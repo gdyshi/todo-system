@@ -52,7 +52,9 @@ def _get_migration_tables_and_columns():
             tables[table_name].update(cols)
 
         # 提取 add_column 操作
-        add_pattern = r'op\.add_column\(\s*["\'](\w+)["\']\s*,\s*sa\.Column\(\s*["\'](\w+)["\']'
+        add_pattern = (
+            r'op\.add_column\(\s*["\'](\w+)["\']\s*,\s*sa\.Column\(\s*["\'](\w+)["\']'
+        )
         for match in re.finditer(add_pattern, content):
             table_name = match.group(1)
             col_name = match.group(2)
