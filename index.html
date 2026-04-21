@@ -14,6 +14,16 @@
         </header>
 
         <main>
+            <!-- 添加任务表单 - 放在最上面 -->
+            <section class="task-form compact">
+                <form id="add-task-form">
+                    <div class="form-group task-input-group">
+                        <input type="text" id="task-input" required placeholder="输入任务描述，AI 将自动拆解子任务..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary btn-add">添加</button>
+                    </div>
+                </form>
+            </section>
+
             <!-- 筛选 -->
             <section class="filters">
                 <div class="filter-row">
@@ -23,45 +33,23 @@
                         <button class="filter-btn" data-filter="life">生活</button>
                         <button class="filter-btn" data-filter="education">教育</button>
                     </div>
-                    <div class="status-filters">
-                        <label><input type="checkbox" class="status-filter" value="in_progress" checked> 进行中</label>
-                        <label><input type="checkbox" class="status-filter" value="pending" checked> 待处理</label>
-                        <label><input type="checkbox" class="status-filter" value="completed"> 已完成</label>
-                    </div>
+                    <button id="toggle-completed" class="btn btn-sm">显示已完成</button>
                 </div>
             </section>
 
-            <!-- 任务列表 - 放在最上面 -->
+            <!-- 任务列表 -->
             <section class="task-list">
                 <h2>任务列表 <span id="task-count">(0)</span></h2>
                 <div id="tasks-container">
                     <p class="loading">加载中...</p>
                 </div>
             </section>
-
-            <!-- 添加任务表单 - 放在任务列表下面 -->
-            <section class="task-form collapsed">
-                <div class="form-header" onclick="toggleTaskForm()">
-                    <h2>➕ 添加新任务</h2>
-                    <span class="toggle-icon">▼</span>
-                </div>
-                <form id="add-task-form" class="form-content">
-                    <div class="form-group task-input-group">
-                        <input type="text" id="task-input" required placeholder="输入任务描述，AI 将自动拆解子任务..." autocomplete="off">
-                        <button type="submit" class="btn btn-primary btn-add">添加</button>
-                    </div>
-                    <p class="form-hint">输入任务描述即可，系统将自动分类并生成子任务</p>
-                </form>
-            </section>
         </main>
 
-        <!-- 状态栏 - 最下面 -->
+        <!-- 状态栏 -->
         <footer class="status-bar">
             <div class="status-left">
-                <span id="stats-summary">加载中...</span>
-            </div>
-            <div class="status-right">
-                <span id="current-position">📋 任务列表</span>
+                <span id="stats-brief">加载中...</span>
             </div>
         </footer>
     </div>
