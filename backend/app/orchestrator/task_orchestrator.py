@@ -292,8 +292,9 @@ class TaskOrchestrator:
         """
         title_lower = title.lower()
 
-        # 工作相关关键词
+        # 工作相关关键词（优先级最高，优先匹配）
         work_keywords = [
+            "工作",
             "项目",
             "报告",
             "会议",
@@ -303,9 +304,12 @@ class TaskOrchestrator:
             "功能",
             "客户",
             "需求",
-            "工作",
-            "上班",
-            "职场",
+            "周报",
+            "日报",
+            "方案",
+            "策划",
+            "招标",
+            "投标",
         ]
         if any(keyword in title_lower for keyword in work_keywords):
             return "work"
