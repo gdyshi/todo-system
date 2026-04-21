@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 import httpx
 from app.config import settings
 
@@ -39,9 +39,7 @@ def _is_subtask_of_test(task: Any, tasks_map: Dict[int, Any]) -> bool:
     return False
 
 
-async def generate_subtasks(
-    title: str, description: Optional[str] = None
-) -> List[str]:
+async def generate_subtasks(title: str, description: Optional[str] = None) -> List[str]:
     """
     调用 AI API 根据任务标题和描述生成子任务列表
 
