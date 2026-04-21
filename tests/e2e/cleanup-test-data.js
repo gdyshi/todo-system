@@ -45,6 +45,10 @@ async function cleanupTestData() {
         if (deleteResponse.ok) {
           deletedCount++;
           console.log(`Deleted task: ${task.title} (ID: ${task.id})`);
+        } else if (deleteResponse.status === 404) {
+          // Task already deleted - not an error
+          deletedCount++;
+          console.log(`Task ${task.id} already deleted (404), skipping`);
         } else {
           console.warn(`Failed to delete task ${task.id}: ${deleteResponse.status}`);
         }
@@ -56,11 +60,12 @@ async function cleanupTestData() {
     console.log(`Cleanup complete. Deleted ${deletedCount} of ${testTasks.length} test tasks.`);
 
     if (deletedCount < testTasks.length) {
-      process.exit(1);
+      console.warn(`Warning: Only deleted ${deletedCount} of ${testTasks.length} test tasks`);
+      // Don't exit with error - cleanup best-effort, shouldn't fail CI
     }
   } catch (error) {
     console.error('Error during cleanup:', error.message);
-    process.exit(1);
+    // Don't exit with error - cleanup failure shouldn't fail CI
   }
 }
 
