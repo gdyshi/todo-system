@@ -9,7 +9,39 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-async def generate_subtasks(title: str, description: Optional[str] = None) -> List[str]:
+_TEST_TITLE_PATTERNS = [
+    "e2e",
+    "e2e 测试",
+    "e2e测试",
+    "测试任务",
+    "mock",
+]
+
+
+def _is_test_title(title: str) -> bool:
+    """检查任务标题是否疑似测试数据"""
+    title_lower = title.lower()
+    for pattern in _TEST_TITLE_PATTERNS:
+        if pattern in title_lower:
+            return True
+    return False
+
+
+def _is_subtask_of_test(task: Any, tasks_map: Dict[int, Any]) -> bool:
+    """检查任务是否是测试任务的子任务"""
+    # 向上遍历父任务链
+    current = task
+    while current.parent_id and current.parent_id in tasks_map:
+        parent = tasks_map[current.parent_id]
+        if _is_test_title(parent.title):
+            return True
+        current = parent
+    return False
+
+
+async def generate_subtasks(
+    title: str, description: Optional[str] = None
+) -> List[str]:
     """
     调用 AI API 根据任务标题和描述生成子任务列表
 
@@ -28,6 +60,11 @@ async def generate_subtasks(title: str, description: Optional[str] = None) -> Li
         logger.info(
             "AI 子任务生成未配置（MODEL_URL/MODEL_NAME/MODEL_KEY），跳过自动生成"
         )
+        return []
+
+    # 跳过测试相关的任务，不生成 AI 子任务
+    if _is_test_title(title):
+        logger.info(f"跳过测试任务自动生成子任务: {title}")
         return []
 
     prompt = _build_prompt(title, description)
