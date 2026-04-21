@@ -14,17 +14,24 @@ let currentStatuses = ['in_progress', 'pending']; // 默认不显示已完成
 let showCompleted = false; // 已完成任务的显示状态
 let tasks = [];
 
+// 后端服务状态跟踪
+let backendReady = false;
+let lastErrorTime = 0;
+const BACKEND_CHECK_INTERVAL = 5000; // 5秒后自动重试
+
 // 通用重试函数 - 应对 Render 免费版冷启动超时
-async function fetchWithRetry(url, options = {}, retries = 2, delay = 3000) {
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
+            backendReady = true;
             return response;
         } catch (error) {
             if (attempt === retries) {
+                lastErrorTime = Date.now();
                 throw error;
             }
             console.warn(`请求失败，${delay / 1000}秒后重试 (${attempt + 1}/${retries})...`, url);
@@ -95,9 +102,34 @@ async function loadTasks() {
         const response = await fetchWithRetry(`${API_BASE_URL}/tasks?category=${currentFilter === 'all' ? '' : currentFilter}`);
         tasks = await response.json();
         renderTasks();
+        // 后端就绪后自动隐藏错误提示
+        hideError();
     } catch (error) {
         console.error('加载任务失败:', error);
-        showError('后端服务正在启动中，请稍候刷新页面');
+        showError('后端服务正在启动中，请稍候...');
+        // 自动重试
+        scheduleBackendRetry();
+    }
+}
+
+// 自动重试加载
+function scheduleBackendRetry() {
+    const timeSinceLastError = Date.now() - lastErrorTime;
+    if (timeSinceLastError < BACKEND_CHECK_INTERVAL) {
+        const waitTime = BACKEND_CHECK_INTERVAL - timeSinceLastError;
+        setTimeout(() => {
+            if (!backendReady) {
+                loadTasks();
+            }
+        }, waitTime);
+    }
+}
+
+// 隐藏错误提示
+function hideError() {
+    const existingToast = document.querySelector('.toast-error');
+    if (existingToast) {
+        existingToast.remove();
     }
 }
 
