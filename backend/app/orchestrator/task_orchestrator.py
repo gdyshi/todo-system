@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
-from app.orchestrator.subtask_generator import generate_subtasks
 from app.config import settings
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -81,16 +80,9 @@ class TaskOrchestrator:
             task_id=task.id, ip=context.ip, location=context.location, category=category
         )
 
-        # 5. 如果需要拆分子任务
+        # 5. 如果用户明确提供了子任务，才拆分
         if subtasks:
             for subtask_title in subtasks:
-                await self._create_subtask(task.id, subtask_title, category)
-        else:
-            # 自动生成子任务（AI）
-            auto_subtasks = await generate_subtasks(
-                task_info["title"], description or task_info.get("description")
-            )
-            for subtask_title in auto_subtasks:
                 await self._create_subtask(task.id, subtask_title, category)
 
         # 6. 安排提醒
