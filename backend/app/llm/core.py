@@ -127,7 +127,7 @@ async def chat(task_name: str, content: str) -> LLMResponse:
                 )
 
     except asyncio.TimeoutError:
-        logger.warning(f"LLM API 超时")
+        logger.warning("LLM API 超时")
         return LLMResponse(
             ok=False,
             data=None,
