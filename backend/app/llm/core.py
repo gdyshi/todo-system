@@ -109,7 +109,10 @@ async def chat(task_name: str, content: str) -> LLMResponse:
                     data=parsed_data,
                     error=None,
                     model=model_name,
-                    usage={"input_tokens": input_tokens, "output_tokens": output_tokens},
+                    usage={
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                    },
                 )
             except json.JSONDecodeError:
                 return LLMResponse(
@@ -117,7 +120,10 @@ async def chat(task_name: str, content: str) -> LLMResponse:
                     data=None,
                     error="parse_error",
                     model=model_name,
-                    usage={"input_tokens": input_tokens, "output_tokens": output_tokens},
+                    usage={
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                    },
                 )
 
     except asyncio.TimeoutError:
