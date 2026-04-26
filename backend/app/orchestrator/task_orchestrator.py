@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
+# generate_subtasks 不再自动调用 — 仅在用户明确要求时通过 API 传入子任务
 from app.config import settings
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -80,7 +81,7 @@ class TaskOrchestrator:
             task_id=task.id, ip=context.ip, location=context.location, category=category
         )
 
-        # 5. 如果用户明确提供了子任务，才拆分
+        # 5. 如果用户明确提供了子任务，才拆分（不再自动生成）
         if subtasks:
             for subtask_title in subtasks:
                 await self._create_subtask(task.id, subtask_title, category)
