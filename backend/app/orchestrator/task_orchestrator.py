@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.executor import TaskExecutor
 from app.models import Task
 from app.orchestrator.context_manager import ContextManager, Context
+
 # generate_subtasks 不再自动调用 — 仅在用户明确要求时通过 API 传入子任务
 from app.config import settings
 from typing import List, Optional, Dict, Any
