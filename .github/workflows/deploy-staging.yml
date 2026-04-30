@@ -31,7 +31,7 @@ jobs:
             -d '{"clearCache": false}'
 
       - name: Wait for deployment
-        run: sleep 90
+        run: sleep 150
 
       - name: Health check
         run: |
