@@ -13,7 +13,9 @@ services:
     startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
-      # DATABASE_URL - 已迁移到 Neon，在 Render Dashboard 环境变量中配置
-      # 请勿在此处写入明文密码并提交到 GitHub
+      # DATABASE_URL 在 Render Dashboard 中配置（已迁移到 Neon）
+      # 此处保留 key 以防止 Render Blueprint 同步时删除该变量
+      - key: DATABASE_URL
+        value: ""  # 在 Render Dashboard 中设置实际的 Neon DB 连接字符串
       - key: PYTHON_VERSION
         value: "3.11.0"
