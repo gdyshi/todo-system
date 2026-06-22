@@ -14,6 +14,8 @@ services:
     healthCheckPath: /health
     envVars:
       # DATABASE_URL - 已迁移到 Neon，在 Render Dashboard 环境变量中配置
-      # 请勿在此处写入明文密码并提交到 GitHub
+      # sync: false 确保 Blueprint 不会删除或覆盖 Dashboard 中设置的值
+      - key: DATABASE_URL
+        sync: false
       - key: PYTHON_VERSION
         value: "3.11.0"
