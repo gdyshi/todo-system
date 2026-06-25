@@ -9,9 +9,13 @@
 这样不依赖数据库，避免 SQLite/PostgreSQL 兼容性问题。
 """
 
-import pytest
+import os
 import re
-from app.models import Base, Task, IPMapping, TaskLocation
+
+import pytest
+from sqlalchemy import inspect
+
+from app.models import Base
 
 
 def _get_model_tables_and_columns():
@@ -25,7 +29,6 @@ def _get_model_tables_and_columns():
 def _get_migration_tables_and_columns():
     """从 alembic 迁移文件提取操作过的表名和列名"""
     migrations_dir = "migrations/versions"
-    import os
 
     tables = {}
     for fname in sorted(os.listdir(migrations_dir)):
@@ -61,6 +64,79 @@ def _get_migration_tables_and_columns():
             if table_name not in tables:
                 tables[table_name] = set()
             tables[table_name].add(col_name)
+
+        # 提取 op.execute 中的 raw SQL DDL
+        # 匹配 op.execute(...) 含多行字符串
+        execute_pattern = (
+            r'op\.execute\s*\(\s*(?:f?)(?:""".*?"""|\'\'\'.*?\'\'\'|"[^"]*"|\'[^\']*\')'
+        )
+        for match in re.finditer(execute_pattern, content, re.DOTALL):
+            sql = match.group(0)
+            # Extract content between the first """ or ''' or " or '
+            # Find the start of the string literal
+            first_quote = None
+            for q in ['"""', "'''", '"', "'"]:
+                idx = sql.find(q)
+                if idx >= 0 and (first_quote is None or idx < sql.find(first_quote)):
+                    first_quote = q
+            if first_quote is None:
+                continue
+            start_idx = sql.find(first_quote) + len(first_quote)
+            # Find the end quote
+            if first_quote in ('"""', "'''"):
+                end_idx = sql.find(first_quote, start_idx)
+            else:
+                end_idx = sql.rfind(first_quote)
+            if end_idx <= start_idx:
+                continue
+            sql_text = sql[start_idx:end_idx]
+
+            # CREATE TABLE [IF NOT EXISTS] table_name (...)
+            create_sql_pattern = (
+                r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s*\((.*?)\)"
+            )
+            for m in re.finditer(
+                create_sql_pattern, sql_text, re.IGNORECASE | re.DOTALL
+            ):
+                table_name = m.group(1)
+                columns_block = m.group(2)
+                # Extract column names: id INTEGER NOT NULL, title VARCHAR NOT NULL, ...
+                col_sql_pattern = r"^\s*(\w+)\s+"
+                cols = set(re.findall(col_sql_pattern, columns_block, re.MULTILINE))
+                # Exclude constraint keywords that can appear as first token
+                cols -= {
+                    "PRIMARY",
+                    "FOREIGN",
+                    "UNIQUE",
+                    "CHECK",
+                    "CONSTRAINT",
+                    "INDEX",
+                    "KEY",
+                    "DEFAULT",
+                }
+                if table_name not in tables:
+                    tables[table_name] = set()
+                tables[table_name].update(cols)
+
+            # ALTER TABLE table_name ADD COLUMN [IF NOT EXISTS] col_name ...
+            add_col_pattern = (
+                r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)"
+            )
+            for m in re.finditer(add_col_pattern, sql_text, re.IGNORECASE):
+                table_name = m.group(1)
+                col_name = m.group(2)
+                if table_name not in tables:
+                    tables[table_name] = set()
+                tables[table_name].add(col_name)
+
+            # ALTER TABLE table_name ALTER COLUMN col_name ... (type change)
+            alter_col_pattern = r"ALTER\s+TABLE\s+(\w+)\s+ALTER\s+COLUMN\s+(\w+)"
+            for m in re.finditer(alter_col_pattern, sql_text, re.IGNORECASE):
+                table_name = m.group(1)
+                col_name = m.group(2)
+                if table_name not in tables:
+                    tables[table_name] = set()
+                tables[table_name].add(col_name)
 
     return {k: sorted(v) for k, v in tables.items()}
 
