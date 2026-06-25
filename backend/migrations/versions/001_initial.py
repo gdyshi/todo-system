@@ -17,8 +17,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Use raw SQL with IF NOT EXISTS to support databases where tables already exist
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER NOT NULL,
             title VARCHAR NOT NULL,
@@ -30,8 +29,7 @@ def upgrade() -> None:
             updated_at TIMESTAMP NOT NULL,
             PRIMARY KEY (id)
         )
-        """
-    )
+        """)
     op.execute("CREATE INDEX IF NOT EXISTS ix_tasks_category ON tasks (category)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_tasks_status ON tasks (status)")
 
